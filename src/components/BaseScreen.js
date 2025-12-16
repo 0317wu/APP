@@ -1,74 +1,48 @@
 // src/components/BaseScreen.js
 import React from 'react';
-import {
-  SafeAreaView,
-  View,
-  Text,
-  ScrollView,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-
-import PressableScale from './PressableScale';
+import { SafeAreaView, View, Text, ScrollView } from 'react-native';
 import { useThemeColors } from '../theme/ThemeContext';
 import { styles as globalStyles } from '../styles';
 
 export default function BaseScreen({
   title,
+  desc,
   children,
-  scroll = true,
-  rightActions = null,
-  showBack = false,
+  scroll = false,
 }) {
   const theme = useThemeColors();
-  const navigation = useNavigation();
+
   const Container = scroll ? ScrollView : View;
 
   return (
     <SafeAreaView
       style={[
-        globalStyles.safeArea,
+        globalStyles.container,
         { backgroundColor: theme.background },
       ]}
     >
-      <View style={globalStyles.screenHeader}>
-        <View style={globalStyles.headerLeft}>
-          {showBack && (
-            <PressableScale
-              onPress={() => navigation.goBack()}
-              style={[
-                globalStyles.iconButton,
-                { backgroundColor: theme.card },
-              ]}
-            >
-              <Ionicons
-                name="chevron-back"
-                size={20}
-                color={theme.text}
-              />
-            </PressableScale>
-          )}
-          <Text
-            style={[
-              globalStyles.screenTitle,
-              { color: theme.text },
-            ]}
-          >
+      <View style={globalStyles.header}>
+        {!!title && (
+          <Text style={[globalStyles.title, { color: theme.text }]}>
             {title}
           </Text>
-        </View>
-        <View style={globalStyles.headerRight}>{rightActions}</View>
+        )}
+        {!!desc && (
+          <Text
+            style={[
+              globalStyles.desc,
+              { color: theme.mutedText },
+            ]}
+            numberOfLines={2}
+          >
+            {desc}
+          </Text>
+        )}
       </View>
 
       <Container
-        style={[
-          globalStyles.screenBody,
-          { backgroundColor: theme.background },
-        ]}
-        contentContainerStyle={
-          scroll ? globalStyles.screenBodyContent : undefined
-        }
-        keyboardShouldPersistTaps="handled"
+        style={{ flex: 1 }}
+        contentContainerStyle={scroll ? globalStyles.scrollContent : undefined}
         showsVerticalScrollIndicator={false}
       >
         {children}

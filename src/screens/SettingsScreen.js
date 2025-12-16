@@ -1,5 +1,4 @@
 // src/screens/SettingsScreen.js
-// src/screens/SettingsScreen.js
 import React, { useState, useMemo } from 'react';
 import {
   View,
@@ -112,10 +111,7 @@ export default function SettingsScreen() {
           ]}
         >
           <Text
-            style={[
-              styles.cardTitle,
-              { color: palette.text },
-            ]}
+            style={[styles.cardTitle, { color: palette.text }]}
           >
             外觀與角色
           </Text>
@@ -178,9 +174,7 @@ export default function SettingsScreen() {
             <Switch
               value={isAdmin}
               onValueChange={(val) =>
-                handleSwitchRole(
-                  val ? 'admin' : 'resident'
-                )
+                handleSwitchRole(val ? 'admin' : 'resident')
               }
               trackColor={{
                 false: '#E5E7EB',
@@ -192,9 +186,7 @@ export default function SettingsScreen() {
 
           <View style={styles.rolePillsRow}>
             <PressableScale
-              onPress={() =>
-                handleSwitchRole('resident')
-              }
+              onPress={() => handleSwitchRole('resident')}
               style={[
                 styles.rolePill,
                 {
@@ -268,10 +260,7 @@ export default function SettingsScreen() {
           ]}
         >
           <Text
-            style={[
-              styles.cardTitle,
-              { color: palette.text },
-            ]}
+            style={[styles.cardTitle, { color: palette.text }]}
           >
             使用者帳號
           </Text>
@@ -289,9 +278,7 @@ export default function SettingsScreen() {
             return (
               <TouchableOpacity
                 key={u.id}
-                onPress={() =>
-                  handleSelectUser(u.id)
-                }
+                onPress={() => handleSelectUser(u.id)}
                 activeOpacity={0.7}
               >
                 <View
@@ -300,7 +287,7 @@ export default function SettingsScreen() {
                     {
                       borderColor: active
                         ? palette.primary
-                        : 'transparent',
+                        : '透明',
                       backgroundColor: active
                         ? palette.primarySoft
                         : 'transparent',
@@ -351,10 +338,7 @@ export default function SettingsScreen() {
           ]}
         >
           <Text
-            style={[
-              styles.cardTitle,
-              { color: palette.text },
-            ]}
+            style={[styles.cardTitle, { color: palette.text }]}
           >
             系統提醒
           </Text>
@@ -391,9 +375,7 @@ export default function SettingsScreen() {
                 true: '#FCA5A5',
               }}
               thumbColor={
-                localAbnormalEnabled
-                  ? '#DC2626'
-                  : '#FFFFFF'
+                localAbnormalEnabled ? '#DC2626' : '#FFFFFF'
               }
             />
           </View>

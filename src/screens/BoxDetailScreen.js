@@ -69,10 +69,14 @@ export default function BoxDetailScreen() {
 
   return (
     <BaseScreen title={box.name} showBack>
+      {/* 上方箱子資訊卡片 */}
       <View
         style={[
           globalStyles.card,
-          { backgroundColor: theme.card },
+          {
+            backgroundColor: theme.card,
+            borderColor: theme.cardBorder,
+          },
         ]}
       >
         <View style={globalStyles.cardRow}>
@@ -122,6 +126,7 @@ export default function BoxDetailScreen() {
         </View>
       </View>
 
+      {/* 快速操作區塊標題 */}
       <View style={globalStyles.sectionHeader}>
         <Text
           style={[
@@ -131,58 +136,165 @@ export default function BoxDetailScreen() {
         >
           快速操作（模擬事件）
         </Text>
+        <Text
+          style={[
+            globalStyles.sectionHint,
+            { color: theme.mutedText },
+          ]}
+        >
+          方便在沒有實體硬體時，直接模擬真實情境。
+        </Text>
       </View>
 
-      <PressableScale
-        style={[
-          globalStyles.primaryButton,
-          { backgroundColor: theme.accent },
-        ]}
-        onPress={handleDelivery}
-      >
-        <Text
+      {/* ✅ 全新卡片式按鈕 UI */}
+      <View style={globalStyles.quickActionsContainer}>
+        {/* 放入包裹 */}
+        <PressableScale
           style={[
-            globalStyles.primaryButtonText,
-            { color: '#FFFFFF' },
+            globalStyles.quickActionCard,
+            {
+              backgroundColor: theme.accentSoft,
+              borderColor: theme.accent,
+            },
           ]}
+          onPress={handleDelivery}
         >
-          放入包裹（模擬）
-        </Text>
-      </PressableScale>
+          <View
+            style={[
+              globalStyles.quickActionIconWrapper,
+              { backgroundColor: 'rgba(37,99,235,0.12)' },
+            ]}
+          >
+            <Ionicons
+              name="cube-outline"
+              size={20}
+              color={theme.accent}
+            />
+          </View>
+          <View style={globalStyles.quickActionTextWrapper}>
+            <Text
+              style={[
+                globalStyles.quickActionTitle,
+                { color: theme.text },
+              ]}
+            >
+              放入包裹（模擬）
+            </Text>
+            <Text
+              style={[
+                globalStyles.quickActionSubtitle,
+                { color: theme.mutedText },
+              ]}
+              numberOfLines={2}
+            >
+              模擬外送員或管理員將餐點放入共享箱。
+            </Text>
+          </View>
+          <Ionicons
+            name="chevron-forward"
+            size={18}
+            color={theme.subtleText}
+          />
+        </PressableScale>
 
-      <PressableScale
-        style={[
-          globalStyles.ghostButton,
-          { borderColor: theme.accent },
-        ]}
-        onPress={handlePickup}
-      >
-        <Text
+        {/* 領取完成 */}
+        <PressableScale
           style={[
-            globalStyles.ghostButtonText,
-            { color: theme.accent },
+            globalStyles.quickActionCard,
+            {
+              backgroundColor: 'rgba(34,197,94,0.08)',
+              borderColor: theme.success,
+            },
           ]}
+          onPress={handlePickup}
         >
-          領取完成（模擬）
-        </Text>
-      </PressableScale>
+          <View
+            style={[
+              globalStyles.quickActionIconWrapper,
+              { backgroundColor: 'rgba(34,197,94,0.14)' },
+            ]}
+          >
+            <Ionicons
+              name="checkmark-done-outline"
+              size={20}
+              color={theme.success}
+            />
+          </View>
+          <View style={globalStyles.quickActionTextWrapper}>
+            <Text
+              style={[
+                globalStyles.quickActionTitle,
+                { color: theme.text },
+              ]}
+            >
+              領取完成（模擬）
+            </Text>
+            <Text
+              style={[
+                globalStyles.quickActionSubtitle,
+                { color: theme.mutedText },
+              ]}
+              numberOfLines={2}
+            >
+              模擬住戶已到場領取，箱子恢復為可預約狀態。
+            </Text>
+          </View>
+          <Ionicons
+            name="chevron-forward"
+            size={18}
+            color={theme.subtleText}
+          />
+        </PressableScale>
 
-      <PressableScale
-        style={[
-          globalStyles.ghostButton,
-          { borderColor: theme.danger },
-        ]}
-        onPress={handleAlert}
-      >
-        <Text
+        {/* 標記異常 */}
+        <PressableScale
           style={[
-            globalStyles.ghostButtonText,
-            { color: theme.danger },
+            globalStyles.quickActionCard,
+            {
+              backgroundColor: theme.dangerSoft,
+              borderColor: theme.danger,
+            },
           ]}
+          onPress={handleAlert}
         >
-          標記異常（模擬）
-        </Text>
-      </PressableScale>
+          <View
+            style={[
+              globalStyles.quickActionIconWrapper,
+              { backgroundColor: 'rgba(220,38,38,0.16)' },
+            ]}
+          >
+            <Ionicons
+              name="alert-circle-outline"
+              size={20}
+              color={theme.danger}
+            />
+          </View>
+          <View style={globalStyles.quickActionTextWrapper}>
+            <Text
+              style={[
+                globalStyles.quickActionTitle,
+                { color: theme.danger },
+              ]}
+            >
+              標記異常（模擬）
+            </Text>
+            <Text
+              style={[
+                globalStyles.quickActionSubtitle,
+                { color: theme.mutedText },
+              ]}
+              numberOfLines={2}
+            >
+              當發現震動、開門異常等情況時，手動標記為異常。
+            </Text>
+          </View>
+          <Ionicons
+            name="chevron-forward"
+            size={18}
+            color={theme.subtleText}
+          />
+        </PressableScale>
+      </View>
     </BaseScreen>
   );
 }

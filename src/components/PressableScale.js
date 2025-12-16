@@ -10,20 +10,22 @@ export default function PressableScale({
 }) {
   const scale = useRef(new Animated.Value(1)).current;
 
-  const animateTo = (toValue) => {
+  const handlePressIn = () => {
     Animated.spring(scale, {
-      toValue,
-      friction: 4,
+      toValue: 0.97,
       useNativeDriver: true,
+      speed: 40,
+      bounciness: 4,
     }).start();
   };
 
-  const handlePressIn = () => {
-    animateTo(0.96);
-  };
-
   const handlePressOut = () => {
-    animateTo(1);
+    Animated.spring(scale, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 40,
+      bounciness: 4,
+    }).start();
   };
 
   return (
@@ -33,16 +35,10 @@ export default function PressableScale({
       onPressOut={handlePressOut}
       {...rest}
     >
-      <Animated.View
-        style={[
-          {
-            transform: [{ scale }],
-          },
-          style,
-        ]}
-      >
+      <Animated.View style={[{ transform: [{ scale }] }, style]}>
         {children}
       </Animated.View>
     </Pressable>
   );
 }
+  

@@ -2,213 +2,247 @@
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
-  },
-  screenHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 4,
-    paddingBottom: 12,
-    justifyContent: 'space-between',
   },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  header: {
+    paddingTop: 8,
+    paddingBottom: 16,
   },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  screenTitle: {
-    fontSize: 22,
+  title: {
+    fontSize: 24,
     fontWeight: '700',
-    marginLeft: 8,
+    letterSpacing: 0.3,
   },
-  screenBody: {
-    flex: 1,
+  desc: {
+    marginTop: 4,
+    fontSize: 13,
   },
-  screenBodyContent: {
-    paddingHorizontal: 20,
+  scrollContent: {
     paddingBottom: 24,
   },
-  iconButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 999,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+
+  // 共用卡片
   card: {
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 16,
     marginBottom: 12,
+    borderWidth: 1,
   },
   cardRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   cardTitle: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 4,
   },
   cardSubtitle: {
-    fontSize: 12,
-    opacity: 0.8,
+    fontSize: 13,
+    marginTop: 2,
   },
-  statusBadge: {
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  statusBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  sectionHeader: {
-    marginTop: 16,
-    marginBottom: 8,
+
+  // Banner
+  banner: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 16,
+    marginBottom: 16,
   },
-  sectionTitle: {
-    fontSize: 18,
+  bannerText: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+
+  // 小圓角 chip
+  chip: {
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+  },
+  chipText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+
+  // 指標卡
+  metricRow: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  metricCard: {
+    flex: 1,
+    borderRadius: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    marginRight: 8,
+  },
+  metricValue: {
+    fontSize: 20,
     fontWeight: '700',
   },
+  metricLabel: {
+    marginTop: 4,
+    fontSize: 12,
+  },
+
+  // Sections
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  sectionHint: {
+    marginLeft: 6,
+    fontSize: 12,
+  },
+
+  // ✅ 新增：Section header（BoxDetail 用）
+  sectionHeader: {
+    marginTop: 16,
+    marginBottom: 10,
+  },
+
+  // 搜尋列 / pill
   pillRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 4,
+    marginBottom: 12,
   },
   pill: {
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    marginRight: 8,
-    marginBottom: 6,
     borderWidth: 1,
+    marginRight: 8,
   },
   pillText: {
     fontSize: 12,
-    fontWeight: '500',
   },
-  banner: {
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  bannerText: {
-    flex: 1,
-    fontSize: 13,
-    marginLeft: 8,
-  },
-  primaryButton: {
-    borderRadius: 16,
-    paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 8,
-  },
-  primaryButtonText: {
-    fontSize: 15,
+  pillTextActive: {
     fontWeight: '600',
   },
-  ghostButton: {
-    borderRadius: 16,
-    paddingVertical: 10,
+
+  searchBar: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 8,
-    borderWidth: 1,
-  },
-  ghostButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  input: {
-    borderRadius: 12,
-    paddingHorizontal: 12,
+    borderRadius: 14,
+    paddingHorizontal: 10,
     paddingVertical: 8,
-    borderWidth: 1,
+    marginBottom: 12,
+  },
+  searchInput: {
+    flex: 1,
     fontSize: 14,
-    marginBottom: 8,
+    marginLeft: 6,
   },
-  listEmptyContainer: {
-    paddingVertical: 40,
-    alignItems: 'center',
-  },
-  listEmptyText: {
-    fontSize: 14,
-    opacity: 0.6,
-  },
-  chip: {
+
+  // Box 狀態 badge
+  statusBadge: {
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    marginRight: 6,
-    marginBottom: 6,
-    borderWidth: 1,
+    alignSelf: 'flex-start',
   },
-  chipText: {
-    fontSize: 12,
+  statusBadgeText: {
+    fontSize: 11,
+    fontWeight: '500',
   },
-  metricCard: {
-    borderRadius: 18,
-    padding: 16,
-    marginRight: 12,
+
+  // list 空畫面
+  listEmptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
   },
-  metricValue: {
-    fontSize: 24,
-    fontWeight: '700',
+  listEmptyText: {
+    fontSize: 13,
   },
-  metricLabel: {
-    fontSize: 12,
-    marginTop: 4,
-    opacity: 0.8,
-  },
+
+  // Analytics bar
   barRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
   },
   barLabel: {
-    width: 80,
-    fontSize: 12,
+    width: 70,
+    fontSize: 11,
   },
   barTrack: {
     flex: 1,
-    height: 8,
+    height: 10,
     borderRadius: 999,
     overflow: 'hidden',
   },
   barFill: {
-    height: 8,
+    height: '100%',
     borderRadius: 999,
   },
-  settingRow: {
+
+  // Settings 專用
+  settingsCard: {
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+  },
+  settingsTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  settingsTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  settingsSubtitle: {
+    fontSize: 12,
+  },
+
+  // ✅ 新增：BoxDetail 快速操作卡片
+  quickActionsContainer: {
+    marginBottom: 24,
+  },
+  quickActionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
+    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    marginBottom: 10,
   },
-  settingLabel: {
-    fontSize: 15,
-    fontWeight: '500',
+  quickActionIconWrapper: {
+    width: 36,
+    height: 36,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
   },
-  settingDescription: {
+  quickActionTextWrapper: {
+    flex: 1,
+  },
+  quickActionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  quickActionSubtitle: {
     fontSize: 12,
-    opacity: 0.7,
     marginTop: 2,
   },
-  divider: {
-    height: 1,
-    opacity: 0.1,
-  },
 });
+
+export default styles;

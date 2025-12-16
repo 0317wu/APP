@@ -18,6 +18,7 @@ const Tab = createBottomTabNavigator();
 
 function AppTabs() {
   const theme = useThemeColors();
+  const isAdmin = theme.role === 'admin';
 
   return (
     <>
@@ -41,11 +42,21 @@ function AppTabs() {
               } else if (route.name === 'History') {
                 iconName = focused ? 'time' : 'time-outline';
               } else if (route.name === 'Analytics') {
-                iconName = focused ? 'stats-chart' : 'stats-chart-outline';
+                iconName = focused
+                  ? 'stats-chart'
+                  : 'stats-chart-outline';
               } else if (route.name === 'Settings') {
-                iconName = focused ? 'settings' : 'settings-outline';
+                iconName = focused
+                  ? 'settings'
+                  : 'settings-outline';
               }
-              return <Ionicons name={iconName} size={size} color={color} />;
+              return (
+                <Ionicons
+                  name={iconName}
+                  size={size}
+                  color={color}
+                />
+              );
             },
           })}
         >
@@ -64,11 +75,14 @@ function AppTabs() {
             component={HistoryScreen}
             options={{ title: '紀錄' }}
           />
-          <Tab.Screen
-            name="Analytics"
-            component={AnalyticsScreen}
-            options={{ title: '統計' }}
-          />
+          {/* ✅ 只有管理員才會看到「統計」這個分頁 */}
+          {isAdmin && (
+            <Tab.Screen
+              name="Analytics"
+              component={AnalyticsScreen}
+              options={{ title: '統計' }}
+            />
+          )}
           <Tab.Screen
             name="Settings"
             component={SettingsScreen}
