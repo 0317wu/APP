@@ -1,10 +1,6 @@
 // src/screens/HomeScreen.js
 import React, { useMemo } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-} from 'react-native';
+import { View, Text, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
@@ -25,16 +21,53 @@ export default function HomeScreen() {
     clearLastAlert,
   } = useAppData();
 
+  const isAdmin = theme.role === 'admin';
+
+  // 統計數值
   const stats = useMemo(() => {
     const total = boxes.length;
     const inUse = boxes.filter((b) => b.status === 'IN_USE').length;
     const alerts = boxes.filter((b) => b.status === 'ALERT').length;
-    const todayCount = history.filter((h) => h.dateLabel === '今天').length;
+    const todayCount = history.filter(
+      (h) => h.dateLabel === '今天',
+    ).length;
     return { total, inUse, alerts, todayCount };
   }, [boxes, history]);
 
+  // 取得最後異常箱子的名稱（有的話）
+  const alertBox = useMemo(
+    () =>
+      lastAlertBoxId
+        ? boxes.find((b) => b.id === lastAlertBoxId) || null
+        : null,
+    [boxes, lastAlertBoxId],
+  );
+
+  const getEventMeta = (type) => {
+    if (type === 'DELIVERY') {
+      return {
+        label: '放入包裹',
+        icon: 'cube-outline',
+        color: theme.accent,
+      };
+    }
+    if (type === 'PICKUP') {
+      return {
+        label: '領取完成',
+        icon: 'checkmark-done-outline',
+        color: theme.success || theme.accent,
+      };
+    }
+    return {
+      label: '異常事件',
+      icon: 'alert-circle-outline',
+      color: theme.danger,
+    };
+  };
+
   return (
     <BaseScreen title="共享箱總覽">
+      {/* 異常警示 Banner */}
       {showAlertBanner && (
         <View
           style={[
@@ -42,7 +75,11 @@ export default function HomeScreen() {
             { backgroundColor: theme.bannerBg },
           ]}
         >
-          <Ionicons name="alert-circle" size={20} color={theme.bannerText} />
+          <Ionicons
+            name="alert-circle"
+            size={20}
+            color={theme.bannerText}
+          />
           <Text
             style={[
               globalStyles.bannerText,
@@ -50,7 +87,12 @@ export default function HomeScreen() {
             ]}
           >
             有共享箱處於異常狀態
-            {lastAlertBoxId ? `（${lastAlertBoxId}）` : ''}，請盡快處理。
+            {alertBox
+              ? `（${alertBox.name}）`
+              : lastAlertBoxId
+              ? `（${lastAlertBoxId}）`
+              : ''}
+            ，請盡快處理或確認狀態。
           </Text>
           <PressableScale
             onPress={clearLastAlert}
@@ -78,11 +120,25 @@ export default function HomeScreen() {
         contentContainerStyle={{ paddingBottom: 24 }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={{ flexDirection: 'row', marginBottom: 16 }}>
+        {/* 上方指標卡片 */}
+        <View
+          style={{
+            flexDirection: 'row',
+            marginBottom: 16,
+          }}
+        >
           {[
             { label: '箱子總數', value: stats.total, icon: 'cube' },
-            { label: '使用中', value: stats.inUse, icon: 'cube-outline' },
-            { label: '異常', value: stats.alerts, icon: 'warning' },
+            {
+              label: '使用中',
+              value: stats.inUse,
+              icon: 'play-circle-outline',
+            },
+            {
+              label: '異常',
+              value: stats.alerts,
+              icon: 'warning',
+            },
           ].map((item) => (
             <View
               key={item.label}
@@ -98,6 +154,8 @@ export default function HomeScreen() {
                 style={{
                   flexDirection: 'row',
                   justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: 4,
                 }}
               >
                 <Ionicons
@@ -143,6 +201,7 @@ export default function HomeScreen() {
           ))}
         </View>
 
+        {/* 快速操作區塊 */}
         <View style={globalStyles.sectionHeader}>
           <Text
             style={[
@@ -154,7 +213,13 @@ export default function HomeScreen() {
           </Text>
         </View>
 
-        <View style={{ flexDirection: 'row', marginBottom: 16 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            marginBottom: 16,
+          }}
+        >
+          {/* 查看全部箱子 */}
           <PressableScale
             style={[
               globalStyles.metricCard,
@@ -165,8 +230,17 @@ export default function HomeScreen() {
             ]}
             onPress={() => navigation.navigate('Boxes')}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Ionicons name="cube" size={20} color={theme.accent} />
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}
+            >
+              <Ionicons
+                name="cube"
+                size={20}
+                color={theme.accent}
+              />
               <Text
                 style={{
                   marginLeft: 8,
@@ -189,17 +263,30 @@ export default function HomeScreen() {
             </Text>
           </PressableScale>
 
+          {/* 使用統計：只有管理員才真正可以開啟 Analytics */}
           <PressableScale
             style={[
               globalStyles.metricCard,
               {
                 backgroundColor: theme.card,
                 flex: 1,
+                opacity: isAdmin ? 1 : 0.6,
               },
             ]}
-            onPress={() => navigation.navigate('Analytics')}
+            onPress={() => {
+              if (isAdmin) {
+                navigation.navigate('Analytics');
+              } else {
+                navigation.navigate('Settings');
+              }
+            }}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}
+            >
               <Ionicons
                 name="stats-chart"
                 size={20}
@@ -210,10 +297,13 @@ export default function HomeScreen() {
                   marginLeft: 8,
                   fontSize: 15,
                   fontWeight: '600',
-                  color: theme.text,
+                  color: isAdmin
+                    ? theme.text
+                    : theme.mutedText,
                 }}
               >
                 使用統計
+                {!isAdmin ? '（僅管理員）' : ''}
               </Text>
             </View>
             <Text
@@ -223,11 +313,14 @@ export default function HomeScreen() {
                 color: theme.mutedText,
               }}
             >
-              查看高峰時段、使用頻率與住戶分佈
+              {isAdmin
+                ? '查看高峰時段、使用頻率與住戶分佈'
+                : '點此前往設定，切換為管理員模式後使用'}
             </Text>
           </PressableScale>
         </View>
 
+        {/* 最近活動 */}
         <View style={globalStyles.sectionHeader}>
           <Text
             style={[
@@ -251,49 +344,75 @@ export default function HomeScreen() {
             </Text>
           </View>
         ) : (
-          history.slice(0, 5).map((item) => (
-            <View
-              key={item.id}
-              style={[
-                globalStyles.card,
-                { backgroundColor: theme.card },
-              ]}
-            >
-              <View style={globalStyles.cardRow}>
-                <View>
-                  <Text
-                    style={[
-                      globalStyles.cardTitle,
-                      { color: theme.text },
-                    ]}
+          history.slice(0, 5).map((item) => {
+            const meta = getEventMeta(item.type);
+            return (
+              <View
+                key={item.id}
+                style={[
+                  globalStyles.card,
+                  {
+                    backgroundColor: theme.card,
+                    borderColor: theme.cardBorder,
+                  },
+                ]}
+              >
+                <View
+                  style={[
+                    globalStyles.cardRow,
+                    { alignItems: 'center' },
+                  ]}
+                >
+                  <View
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 999,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginRight: 10,
+                      backgroundColor: theme.cardBorder,
+                    }}
                   >
-                    {item.boxName}
-                  </Text>
+                    <Ionicons
+                      name={meta.icon}
+                      size={18}
+                      color={meta.color}
+                    />
+                  </View>
+
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={[
+                        globalStyles.cardTitle,
+                        { color: theme.text },
+                      ]}
+                    >
+                      {item.boxName}
+                    </Text>
+                    <Text
+                      style={[
+                        globalStyles.cardSubtitle,
+                        { color: theme.mutedText },
+                      ]}
+                    >
+                      {item.userName} · {item.dateLabel}
+                    </Text>
+                  </View>
+
                   <Text
-                    style={[
-                      globalStyles.cardSubtitle,
-                      { color: theme.mutedText },
-                    ]}
+                    style={{
+                      fontSize: 13,
+                      fontWeight: '500',
+                      color: meta.color,
+                    }}
                   >
-                    {item.userName} · {item.dateLabel}
+                    {meta.label}
                   </Text>
                 </View>
-                <Text
-                  style={{
-                    fontSize: 13,
-                    fontWeight: '500',
-                    color: theme.accent,
-                  }}
-                >
-                  {item.type === 'DELIVERY'
-                    ? '放入包裹'
-                    : item.type === 'PICKUP'
-                    ? '領取完成'
-                    : '異常事件'}
-                </Text>
               </View>
-            </View>
-          ))
+            );
+          })
         )}
       </ScrollView>
     </BaseScreen>

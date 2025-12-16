@@ -27,6 +27,7 @@ export default function BoxesScreen() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [refreshing, setRefreshing] = useState(false);
 
+  // 目前篩選後的清單
   const filtered = useMemo(() => {
     return boxes.filter((box) => {
       if (statusFilter !== 'ALL' && box.status !== statusFilter) return false;
@@ -61,21 +62,61 @@ export default function BoxesScreen() {
         ? theme.danger
         : theme.chipText;
 
+    // 狀態 icon 顏色
+    const statusIconColor =
+      meta.tone === 'success'
+        ? theme.success || theme.accent
+        : meta.tone === 'danger'
+        ? theme.danger
+        : theme.accent;
+
     return (
       <PressableScale
         style={[
           globalStyles.card,
-          { backgroundColor: theme.card },
+          {
+            backgroundColor: theme.card,
+            borderColor: theme.cardBorder,
+            marginBottom: 12,
+          },
         ]}
-        onPress={() => navigation.navigate('BoxDetail', { boxId: item.id })}
+        onPress={() =>
+          navigation.navigate('BoxDetail', { boxId: item.id })
+        }
       >
-        <View style={globalStyles.cardRow}>
+        <View
+          style={[
+            globalStyles.cardRow,
+            { alignItems: 'center' },
+          ]}
+        >
+          {/* 左側 icon */}
+          <View
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 999,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 12,
+              backgroundColor: theme.background,
+            }}
+          >
+            <Ionicons
+              name="cube-outline"
+              size={20}
+              color={statusIconColor}
+            />
+          </View>
+
+          {/* 中間資訊 */}
           <View style={{ flex: 1 }}>
             <Text
               style={[
                 globalStyles.cardTitle,
                 { color: theme.text },
               ]}
+              numberOfLines={1}
             >
               {item.name}
             </Text>
@@ -84,19 +125,33 @@ export default function BoxesScreen() {
                 globalStyles.cardSubtitle,
                 { color: theme.mutedText },
               ]}
+              numberOfLines={1}
             >
               {item.location}
             </Text>
             <Text
               style={[
                 globalStyles.cardSubtitle,
-                { color: theme.mutedText, marginTop: 4 },
+                {
+                  color: theme.subtleText,
+                  marginTop: 4,
+                  fontSize: 11,
+                },
               ]}
+              numberOfLines={1}
             >
               更新於 {formatDateTime(item.lastUpdated)}
             </Text>
           </View>
-          <View style={{ alignItems: 'flex-end' }}>
+
+          {/* 右側狀態 + 箭頭 */}
+          <View
+            style={{
+              alignItems: 'flex-end',
+              justifyContent: 'space-between',
+              height: 40,
+            }}
+          >
             <View
               style={[
                 globalStyles.statusBadge,
@@ -112,15 +167,35 @@ export default function BoxesScreen() {
                 {meta.label}
               </Text>
             </View>
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color={theme.subtleText}
+            />
           </View>
         </View>
       </PressableScale>
     );
   };
 
+  const filterLabel = (() => {
+    switch (statusFilter) {
+      case 'IN_USE':
+        return '使用中的箱子';
+      case 'AVAILABLE':
+        return '目前可預約的箱子';
+      case 'ALERT':
+        return '有異常狀態的箱子';
+      default:
+        return '全部箱子';
+    }
+  })();
+
   return (
     <BaseScreen title="所有共享箱" scroll={false}>
-      <View style={{ paddingHorizontal: 20, paddingBottom: 16 }}>
+      {/* 上方搜尋 + 篩選區塊 */}
+      <View style={{ paddingHorizontal: 20, paddingBottom: 8 }}>
+        {/* 搜尋列 */}
         <View
           style={[
             globalStyles.cardRow,
@@ -129,6 +204,7 @@ export default function BoxesScreen() {
               paddingHorizontal: 14,
               paddingVertical: 6,
               backgroundColor: theme.card,
+              marginBottom: 8,
             },
           ]}
         >
@@ -151,7 +227,13 @@ export default function BoxesScreen() {
           />
         </View>
 
-        <View style={[globalStyles.sectionHeader, { marginTop: 12 }]}>
+        {/* 篩選標題 + 結果數 */}
+        <View
+          style={[
+            globalStyles.sectionTitleRow,
+            { marginTop: 8, marginBottom: 4 },
+          ]}
+        >
           <Text
             style={[
               globalStyles.sectionTitle,
@@ -160,7 +242,18 @@ export default function BoxesScreen() {
           >
             篩選
           </Text>
+          <Text
+            style={{
+              marginLeft: 8,
+              fontSize: 12,
+              color: theme.subtleText,
+            }}
+          >
+            {filterLabel} · {filtered.length} 個結果
+          </Text>
         </View>
+
+        {/* 篩選 pill */}
         <View style={globalStyles.pillRow}>
           {[
             { label: '全部', value: 'ALL' },
@@ -192,6 +285,7 @@ export default function BoxesScreen() {
                       color: active
                         ? theme.accent
                         : theme.chipText,
+                      fontWeight: active ? '600' : '400',
                     },
                   ]}
                 >
@@ -203,6 +297,7 @@ export default function BoxesScreen() {
         </View>
       </View>
 
+      {/* 列表 */}
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}

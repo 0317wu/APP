@@ -10,45 +10,69 @@ import { getTimeOfDayBucket } from '../utils/timeUtils';
 
 export default function AnalyticsScreen() {
   const theme = useThemeColors();
-  const { boxes, history, users, isAdminMode, currentUser } = useAppData();
+  const { boxes, history, users } = useAppData();
 
-  // ✔ 管理員看全部，一般住戶只看自己的紀錄
-  const scopedHistory = useMemo(() => {
-    if (isAdminMode) return history;
-    if (!currentUser) return [];
-    return history.filter((h) => h.userId === currentUser.id);
-  }, [history, isAdminMode, currentUser]);
+  // 保險：history 不是陣列就當作空陣列
+  const historySafe = Array.isArray(history) ? history : [];
 
+  // 統計核心：依箱子 / 使用者 / 時段
   const { byBox, byUser, byTimeOfDay, totalEvents } = useMemo(() => {
     const byBox = {};
     const byUser = {};
     const byTimeOfDay = {};
-    const totalEvents = scopedHistory.length;
 
-    scopedHistory.forEach((h) => {
-      if (!h.boxId) return;
-      byBox[h.boxId] = (byBox[h.boxId] || 0) + 1;
+    historySafe.forEach((h) => {
+      // 箱子統計
+      if (h.boxId) {
+        byBox[h.boxId] = (byBox[h.boxId] || 0) + 1;
+      }
+
+      // 使用者統計
       if (h.userId) {
         byUser[h.userId] = (byUser[h.userId] || 0) + 1;
       }
-      const bucket = getTimeOfDayBucket(h.timestamp);
-      byTimeOfDay[bucket] = (byTimeOfDay[bucket] || 0) + 1;
+
+      // 時段統計
+      if (h.timestamp) {
+        const bucket = getTimeOfDayBucket(h.timestamp);
+        if (bucket) {
+          byTimeOfDay[bucket] = (byTimeOfDay[bucket] || 0) + 1;
+        }
+      }
     });
 
-    return { byBox, byUser, byTimeOfDay, totalEvents };
-  }, [scopedHistory]);
+    return {
+      byBox,
+      byUser,
+      byTimeOfDay,
+      totalEvents: historySafe.length,
+    };
+  }, [historySafe]);
 
   const maxBoxCount =
-    Object.values(byBox).reduce((m, v) => Math.max(m, v), 0) || 1;
+    Object.values(byBox).reduce(
+      (m, v) => Math.max(m, v),
+      0,
+    ) || 1;
   const maxUserCount =
-    Object.values(byUser).reduce((m, v) => Math.max(m, v), 0) || 1;
+    Object.values(byUser).reduce(
+      (m, v) => Math.max(m, v),
+      0,
+    ) || 1;
   const maxTimeCount =
-    Object.values(byTimeOfDay).reduce((m, v) => Math.max(m, v), 0) || 1;
+    Object.values(byTimeOfDay).reduce(
+      (m, v) => Math.max(m, v),
+      0,
+    ) || 1;
 
   const boxName = (boxId) =>
     boxes.find((b) => b.id === boxId)?.name || boxId;
   const userName = (userId) =>
-    users.find((u) => u.id === userId)?.name || userId;
+    users.find((u) => u.id === userId)?.name ||
+    users.find((u) => u.id === userId)?.label ||
+    userId;
+
+  const scopeText = '目前顯示：所有住戶的使用紀錄（管理員專用）';
 
   const renderBarRow = (label, value, max) => {
     const ratio = max === 0 ? 0 : value / max;
@@ -93,21 +117,14 @@ export default function AnalyticsScreen() {
     );
   };
 
-  const scopeText = isAdminMode
-    ? '目前為「管理員模式」，統計包含所有住戶與所有共享箱的使用紀錄。'
-    : currentUser
-    ? `目前為「一般使用者模式」，只顯示 ${currentUser.name} 的使用紀錄。`
-    : '目前為「一般使用者模式」，只顯示當前住戶的使用紀錄。';
-
   return (
     <BaseScreen title="使用統計">
       <ScrollView
-        contentContainerStyle={{
-          paddingHorizontal: 20,
-          paddingBottom: 24,
-        }}
+        style={{ flex: 1 }}
+        contentContainerStyle={globalStyles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* 範圍說明 + 指標 */}
         <View
           style={[
             globalStyles.card,
@@ -117,14 +134,16 @@ export default function AnalyticsScreen() {
             },
           ]}
         >
-          <Text
-            style={[
-              globalStyles.cardTitle,
-              { color: theme.text, marginBottom: 4 },
-            ]}
-          >
-            檢視範圍
-          </Text>
+          <View style={globalStyles.sectionTitleRow}>
+            <Text
+              style={[
+                globalStyles.sectionTitle,
+                { color: theme.text },
+              ]}
+            >
+              檢視範圍
+            </Text>
+          </View>
           <Text
             style={[
               globalStyles.cardSubtitle,
@@ -133,59 +152,89 @@ export default function AnalyticsScreen() {
           >
             {scopeText}
           </Text>
-        </View>
 
-        <View style={{ flexDirection: 'row', marginBottom: 16 }}>
           <View
             style={[
-              globalStyles.metricCard,
-              { backgroundColor: theme.card, flex: 1 },
+              globalStyles.metricRow,
+              { marginTop: 12 },
             ]}
           >
-            <Text
+            <View
               style={[
-                globalStyles.metricLabel,
-                { color: theme.mutedText },
+                globalStyles.metricCard,
+                { backgroundColor: theme.card, flex: 1 },
               ]}
             >
-              統計事件數
-            </Text>
-            <Text
+              <Text
+                style={[
+                  globalStyles.metricLabel,
+                  { color: theme.mutedText },
+                ]}
+              >
+                統計事件數
+              </Text>
+              <Text
+                style={[
+                  globalStyles.metricValue,
+                  { color: theme.text },
+                ]}
+              >
+                {totalEvents}
+              </Text>
+            </View>
+
+            <View
               style={[
-                globalStyles.metricValue,
-                { color: theme.text },
+                globalStyles.metricCard,
+                { backgroundColor: theme.card, flex: 1 },
               ]}
             >
-              {totalEvents}
-            </Text>
-          </View>
-          <View
-            style={[
-              globalStyles.metricCard,
-              { backgroundColor: theme.card, flex: 1 },
-            ]}
-          >
-            <Text
+              <Text
+                style={[
+                  globalStyles.metricLabel,
+                  { color: theme.mutedText },
+                ]}
+              >
+                涉及箱子
+              </Text>
+              <Text
+                style={[
+                  globalStyles.metricValue,
+                  { color: theme.text },
+                ]}
+              >
+                {Object.keys(byBox).length}
+              </Text>
+            </View>
+
+            <View
               style={[
-                globalStyles.metricLabel,
-                { color: theme.mutedText },
+                globalStyles.metricCard,
+                { backgroundColor: theme.card, flex: 1 },
               ]}
             >
-              參與住戶
-            </Text>
-            <Text
-              style={[
-                globalStyles.metricValue,
-                { color: theme.text },
-              ]}
-            >
-              {Object.keys(byUser).length}
-            </Text>
+              <Text
+                style={[
+                  globalStyles.metricLabel,
+                  { color: theme.mutedText },
+                ]}
+              >
+                參與住戶
+              </Text>
+              <Text
+                style={[
+                  globalStyles.metricValue,
+                  { color: theme.text },
+                ]}
+              >
+                {Object.keys(byUser).length}
+              </Text>
+            </View>
           </View>
         </View>
 
         {/* 依共享箱 */}
-        <View style={globalStyles.sectionHeader}>
+        <View style={globalStyles.sectionTitleRow}>
           <Text
             style={[
               globalStyles.sectionTitle,
@@ -194,7 +243,16 @@ export default function AnalyticsScreen() {
           >
             依共享箱
           </Text>
+          <Text
+            style={[
+              globalStyles.sectionHint,
+              { color: theme.mutedText },
+            ]}
+          >
+            哪些箱子被使用得最多？
+          </Text>
         </View>
+
         {Object.keys(byBox).length === 0 ? (
           <View style={globalStyles.listEmptyContainer}>
             <Text
@@ -203,7 +261,7 @@ export default function AnalyticsScreen() {
                 { color: theme.mutedText },
               ]}
             >
-              尚無資料可分析，請先在共享箱進行幾次操作。
+              尚無資料可分析。
             </Text>
           </View>
         ) : (
@@ -214,13 +272,17 @@ export default function AnalyticsScreen() {
             ]}
           >
             {Object.entries(byBox).map(([id, count]) =>
-              renderBarRow(boxName(id), count, maxBoxCount),
+              renderBarRow(
+                boxName(id),
+                count,
+                maxBoxCount,
+              ),
             )}
           </View>
         )}
 
         {/* 依住戶 */}
-        <View style={globalStyles.sectionHeader}>
+        <View style={globalStyles.sectionTitleRow}>
           <Text
             style={[
               globalStyles.sectionTitle,
@@ -229,7 +291,16 @@ export default function AnalyticsScreen() {
           >
             依住戶
           </Text>
+          <Text
+            style={[
+              globalStyles.sectionHint,
+              { color: theme.mutedText },
+            ]}
+          >
+            哪位住戶最常使用共享箱？
+          </Text>
         </View>
+
         {Object.keys(byUser).length === 0 ? (
           <View style={globalStyles.listEmptyContainer}>
             <Text
@@ -249,22 +320,35 @@ export default function AnalyticsScreen() {
             ]}
           >
             {Object.entries(byUser).map(([id, count]) =>
-              renderBarRow(userName(id), count, maxUserCount),
+              renderBarRow(
+                userName(id),
+                count,
+                maxUserCount,
+              ),
             )}
           </View>
         )}
 
-        {/* 依時間區段 */}
-        <View style={globalStyles.sectionHeader}>
+        {/* 依時段 */}
+        <View style={globalStyles.sectionTitleRow}>
           <Text
             style={[
               globalStyles.sectionTitle,
               { color: theme.text },
             ]}
           >
-            依時間區間
+            依時段
+          </Text>
+          <Text
+            style={[
+              globalStyles.sectionHint,
+              { color: theme.mutedText },
+            ]}
+          >
+            一天中什麼時間最常收發包裹？
           </Text>
         </View>
+
         {Object.keys(byTimeOfDay).length === 0 ? (
           <View style={globalStyles.listEmptyContainer}>
             <Text
@@ -283,10 +367,17 @@ export default function AnalyticsScreen() {
               { backgroundColor: theme.background },
             ]}
           >
-            {['早上', '下午', '晚上', '深夜'].map((bucket) => {
-              const count = byTimeOfDay[bucket] || 0;
-              return renderBarRow(bucket, count, maxTimeCount);
-            })}
+            {['早上', '下午', '晚上', '深夜'].map(
+              (bucket) => {
+                const count =
+                  byTimeOfDay[bucket] || 0;
+                return renderBarRow(
+                  bucket,
+                  count,
+                  maxTimeCount,
+                );
+              },
+            )}
           </View>
         )}
       </ScrollView>
