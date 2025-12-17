@@ -5,12 +5,15 @@ import React, {
   useState,
   useMemo,
   useCallback,
+  useEffect,
 } from 'react';
-import { DefaultTheme, DarkTheme } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ThemeContext = createContext(null);
 
-// 淺色主題配色
+const STORAGE_THEME_KEY = '@iot_app/theme';
+const STORAGE_ROLE_KEY = '@iot_app/role';
+
 const lightPalette = {
   background: '#F3F4F6',
   card: '#FFFFFF',
@@ -20,106 +23,132 @@ const lightPalette = {
   subtleText: '#9CA3AF',
 
   primary: '#2563EB',
-  primarySoft: 'rgba(37,99,235,0.08)',
   accent: '#2563EB',
   accentSoft: 'rgba(37,99,235,0.08)',
 
   danger: '#DC2626',
   dangerSoft: 'rgba(220,38,38,0.08)',
-  success: '#16A34A',
 
-  warning: '#D97706',
-  warningSoft: 'rgba(245,158,11,0.12)',
+  success: '#16A34A',
+  successSoft: 'rgba(22,163,74,0.08)',
+
+  chipBg: '#F3F4F6',
+  chipBorder: '#E5E7EB',
+  chipText: '#4B5563',
+
+  bannerBg: '#FEE2E2',
+  bannerText: '#B91C1C',
 
   divider: '#E5E7EB',
-  chipBg: '#EFF6FF',
-  chipBorder: '#DBEAFE',
-  chipText: '#1D4ED8',
-  bannerBg: '#FEF3C7',
-  bannerText: '#92400E',
 
-  tabBar: '#FFFFFF',
-  tabBarBorder: '#E5E7EB',
+  tabBarBg: '#FFFFFF',
+  tabBarActive: '#111827',
   tabBarInactive: '#9CA3AF',
+
+  headerBg: 'transparent',
+  headerText: '#111827',
 };
 
-// 深色主題配色
 const darkPalette = {
-  ...lightPalette,
   background: '#020617',
-  card: '#020617',
-  cardBorder: '#1F2937',
-  text: '#F9FAFB',
+  card: '#0F172A',
+  cardBorder: '#1E293B',
+  text: '#E5E7EB',
   mutedText: '#9CA3AF',
   subtleText: '#6B7280',
-  divider: '#1F2937',
 
-  chipBg: 'rgba(37,99,235,0.18)',
-  chipBorder: 'rgba(37,99,235,0.35)',
-  chipText: '#BFDBFE',
-  bannerBg: 'rgba(251,191,36,0.18)',
-  bannerText: '#FACC15',
+  primary: '#60A5FA',
+  accent: '#60A5FA',
+  accentSoft: 'rgba(96,165,250,0.16)',
 
-  tabBar: '#020617',
-  tabBarBorder: '#1F2937',
-  tabBarInactive: '#4B5563',
+  danger: '#FCA5A5',
+  dangerSoft: 'rgba(248,113,113,0.16)',
 
-  warning: '#FBBF24',
-  warningSoft: 'rgba(250,204,21,0.18)',
+  success: '#4ADE80',
+  successSoft: 'rgba(74,222,128,0.16)',
+
+  chipBg: '#020617',
+  chipBorder: '#1E293B',
+  chipText: '#E5E7EB',
+
+  bannerBg: 'rgba(248,113,113,0.18)',
+  bannerText: '#FCA5A5',
+
+  divider: '#1E293B',
+
+  tabBarBg: '#020617',
+  tabBarActive: '#E5E7EB',
+  tabBarInactive: '#6B7280',
+
+  headerBg: 'transparent',
+  headerText: '#E5E7EB',
 };
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState('light'); // 'light' | 'dark'
   const [role, setRole] = useState('resident'); // 'resident' | 'admin'
 
+  // 啟動時從本機載入 theme / role
+  useEffect(() => {
+    (async () => {
+      try {
+        const [[, storedTheme], [, storedRole]] =
+          await AsyncStorage.multiGet([
+            STORAGE_THEME_KEY,
+            STORAGE_ROLE_KEY,
+          ]);
+
+        if (storedTheme === 'light' || storedTheme === 'dark') {
+          setTheme(storedTheme);
+        }
+        if (storedRole === 'resident' || storedRole === 'admin') {
+          setRole(storedRole);
+        }
+      } catch (e) {
+        console.warn('載入主題 / 角色失敗：', e);
+      }
+    })();
+  }, []);
+
   const toggleTheme = useCallback(() => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+    setTheme((prev) => {
+      const next = prev === 'light' ? 'dark' : 'light';
+      AsyncStorage.setItem(STORAGE_THEME_KEY, next).catch(() => {});
+      return next;
+    });
   }, []);
 
-  /**
-   * nextRole: 'resident' | 'admin'
-   * 不傳參數則在 resident / admin 之間切換
-   */
+  // SettingsScreen 會傳 'admin' / 'resident' 進來
   const toggleRole = useCallback((nextRole) => {
-    if (nextRole) {
-      setRole(nextRole);
-    } else {
-      setRole((prev) => (prev === 'resident' ? 'admin' : 'resident'));
-    }
+    setRole((prev) => {
+      const finalRole =
+        nextRole === 'admin' || nextRole === 'resident'
+          ? nextRole
+          : prev === 'resident'
+          ? 'admin'
+          : 'resident';
+
+      AsyncStorage.setItem(STORAGE_ROLE_KEY, finalRole).catch(
+        () => {},
+      );
+      return finalRole;
+    });
   }, []);
 
-  const value = useMemo(() => {
-    const isDark = theme === 'dark';
-    const palette = isDark ? darkPalette : lightPalette;
+  const palette = theme === 'dark' ? darkPalette : lightPalette;
 
-    // React Navigation 用的 theme
-    const baseNav = isDark ? DarkTheme : DefaultTheme;
-    const navigationTheme = {
-      ...baseNav,
-      dark: isDark,
-      colors: {
-        ...baseNav.colors,
-        background: palette.background,
-        card: palette.card,
-        border: palette.cardBorder,
-        text: palette.text,
-        primary: palette.accent,
-        notification: palette.accent,
-      },
-    };
-
-    return {
+  const value = useMemo(
+    () => ({
       theme,
       role,
-      isDark,
-      palette,
-      navigationTheme,
       toggleTheme,
       toggleRole,
-      // 攤平成單獨顏色 key，方便其他地方直接 theme.xxx
+      palette,
+      // 讓 useThemeColors() 直接拿 palette key
       ...palette,
-    };
-  }, [theme, role]);
+    }),
+    [theme, role, palette],
+  );
 
   return (
     <ThemeContext.Provider value={value}>
@@ -131,7 +160,7 @@ export function ThemeProvider({ children }) {
 export function useThemeColors() {
   const ctx = useContext(ThemeContext);
   if (!ctx) {
-    throw new Error('useThemeColors must be used within ThemeProvider');
+    throw new Error('useThemeColors 必須在 ThemeProvider 中使用');
   }
   return ctx;
 }

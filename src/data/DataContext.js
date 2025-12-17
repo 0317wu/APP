@@ -5,7 +5,9 @@ import React, {
   useState,
   useMemo,
   useCallback,
+  useEffect,
 } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   INITIAL_BOXES,
   INITIAL_HISTORY,
@@ -14,47 +16,60 @@ import {
 
 const DataContext = createContext(null);
 
+const STORAGE_KEYS = {
+  BOXES: '@iot_app/boxes',
+  HISTORY: '@iot_app/history',
+  CURRENT_USER_ID: '@iot_app/currentUserId',
+  ABNORMAL_ALERT: '@iot_app/abnormalAlertEnabled',
+  LAST_ALERT_BOX_ID: '@iot_app/lastAlertBoxId',
+};
+
 // 把日期轉成「今天 / 昨天 / 更早」
 function buildDateLabel(dateInput) {
-  const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+  const d =
+    dateInput instanceof Date ? dateInput : new Date(dateInput);
   if (Number.isNaN(d.getTime())) return '其他日期';
 
   const today = new Date();
-  const startOfToday = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate(),
+  const strip = (x) =>
+    new Date(
+      x.getFullYear(),
+      x.getMonth(),
+      x.getDate(),
+    ).getTime();
+  const diffDays = Math.round(
+    (strip(today) - strip(d)) / 86400000,
   );
-  const target = new Date(
-    d.getFullYear(),
-    d.getMonth(),
-    d.getDate(),
-  );
-  const diffMs = startOfToday - target;
-  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
 
   if (diffDays === 0) return '今天';
   if (diffDays === 1) return '昨天';
   return '更早';
 }
 
-// 把初始的歷史紀錄洗成統一格式
-function normalizeInitialHistory(
-  initialHistory = [],
+// 統一歷史紀錄格式
+function normalizeHistory(
+  raw = [],
   users = [],
   boxes = [],
 ) {
-  return initialHistory.map((item, index) => {
-    const timestamp = item.timestamp || new Date().toISOString();
-    const box = boxes.find((b) => b.id === item.boxId);
-    const user = users.find((u) => u.id === item.userId);
+  return (raw || []).map((item, idx) => {
+    const timestamp =
+      item.timestamp || new Date().toISOString();
+    const box =
+      boxes.find((b) => b.id === item.boxId) || null;
+    const user =
+      users.find((u) => u.id === item.userId) || null;
 
     return {
-      id: item.id || `hist-${index}-${Date.now()}`,
-      boxId: item.boxId,
+      id:
+        item.id ||
+        `hist-${idx}-${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2, 6)}`,
+      boxId: item.boxId || box?.id || '',
       boxName: item.boxName || box?.name || '',
       userId: item.userId || user?.id || null,
-      userName: item.userName || user?.name || '',
+      userName: item.userName || user?.name || '未知使用者',
       type: item.type || 'DELIVERY',
       note: item.note || '',
       timestamp,
@@ -66,32 +81,130 @@ function normalizeInitialHistory(
 export function DataProvider({ children }) {
   const [boxes, setBoxes] = useState(INITIAL_BOXES || []);
   const [users] = useState(INITIAL_USERS || []);
-
   const [history, setHistory] = useState(() =>
-    normalizeInitialHistory(
+    normalizeHistory(
       INITIAL_HISTORY || [],
       INITIAL_USERS || [],
       INITIAL_BOXES || [],
     ),
   );
 
-  const [currentUserId, setCurrentUserId] = useState(
-    (INITIAL_USERS && INITIAL_USERS[0]?.id) || 'user-001',
-  );
-
-  const [abnormalAlertEnabled, setAbnormalAlertEnabled] =
+  const [currentUserIdState, setCurrentUserIdState] =
+    useState(
+      (INITIAL_USERS && INITIAL_USERS[0]?.id) ||
+        'user-001',
+    );
+  const [abnormalAlertEnabledState, setAbnormalAlertEnabledState] =
     useState(true);
-  const [lastAlertBoxId, setLastAlertBoxId] = useState(null);
+  const [lastAlertBoxIdState, setLastAlertBoxIdState] =
+    useState(null);
 
-  // 目前登入的住戶
+  const [hydrated, setHydrated] = useState(false);
+
+  // 啟動時從本機載入資料
+  useEffect(() => {
+    (async () => {
+      try {
+        const entries = await AsyncStorage.multiGet(
+          Object.values(STORAGE_KEYS),
+        );
+        const map = Object.fromEntries(entries);
+
+        if (map[STORAGE_KEYS.BOXES]) {
+          try {
+            const parsed = JSON.parse(
+              map[STORAGE_KEYS.BOXES],
+            );
+            if (Array.isArray(parsed)) {
+              setBoxes(parsed);
+            }
+          } catch {}
+        }
+
+        if (map[STORAGE_KEYS.HISTORY]) {
+          try {
+            const parsed = JSON.parse(
+              map[STORAGE_KEYS.HISTORY],
+            );
+            if (Array.isArray(parsed)) {
+              setHistory(
+                normalizeHistory(
+                  parsed,
+                  INITIAL_USERS || [],
+                  INITIAL_BOXES || [],
+                ),
+              );
+            }
+          } catch {}
+        }
+
+        if (map[STORAGE_KEYS.CURRENT_USER_ID]) {
+          setCurrentUserIdState(
+            map[STORAGE_KEYS.CURRENT_USER_ID],
+          );
+        }
+
+        if (
+          typeof map[STORAGE_KEYS.ABNORMAL_ALERT] ===
+          'string'
+        ) {
+          setAbnormalAlertEnabledState(
+            map[STORAGE_KEYS.ABNORMAL_ALERT] === 'true',
+          );
+        }
+
+        if (map[STORAGE_KEYS.LAST_ALERT_BOX_ID]) {
+          setLastAlertBoxIdState(
+            map[STORAGE_KEYS.LAST_ALERT_BOX_ID],
+          );
+        }
+      } catch (e) {
+        console.warn('載入本機資料失敗：', e);
+      } finally {
+        setHydrated(true);
+      }
+    })();
+  }, []);
+
+  // 包一層，對外還是叫 setCurrentUserId
+  const setCurrentUserId = useCallback((id) => {
+    setCurrentUserIdState(id);
+    AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER_ID, id).catch(
+      () => {},
+    );
+  }, []);
+
+  const setAbnormalAlertEnabled = useCallback((value) => {
+    setAbnormalAlertEnabledState(value);
+    AsyncStorage.setItem(
+      STORAGE_KEYS.ABNORMAL_ALERT,
+      String(value),
+    ).catch(() => {});
+  }, []);
+
+  const setLastAlertBoxId = useCallback((boxIdOrNull) => {
+    setLastAlertBoxIdState(boxIdOrNull);
+    if (boxIdOrNull) {
+      AsyncStorage.setItem(
+        STORAGE_KEYS.LAST_ALERT_BOX_ID,
+        boxIdOrNull,
+      ).catch(() => {});
+    } else {
+      AsyncStorage.removeItem(
+        STORAGE_KEYS.LAST_ALERT_BOX_ID,
+      ).catch(() => {});
+    }
+  }, []);
+
   const currentUser = useMemo(
     () =>
-      users.find((u) => u.id === currentUserId) ||
-      null,
-    [users, currentUserId],
+      users.find((u) => u.id === currentUserIdState) || null,
+    [users, currentUserIdState],
   );
 
-  // 是否顯示首頁異常 Banner
+  const abnormalAlertEnabled = abnormalAlertEnabledState;
+  const lastAlertBoxId = lastAlertBoxIdState;
+
   const showAlertBanner = useMemo(
     () => abnormalAlertEnabled && !!lastAlertBoxId,
     [abnormalAlertEnabled, lastAlertBoxId],
@@ -99,94 +212,118 @@ export function DataProvider({ children }) {
 
   const clearLastAlert = useCallback(() => {
     setLastAlertBoxId(null);
-  }, []);
+  }, [setLastAlertBoxId]);
 
   // 核心事件：放入 / 領取 / 標記異常
   const logEvent = useCallback(
     ({ boxId, type, note }) => {
       if (!boxId || !type) return;
 
-      // 先把對應的箱子找出來，拿名字
-      const targetBox = boxes.find((b) => b.id === boxId);
+      const iso = new Date().toISOString();
 
-      // 更新箱子狀態
-      setBoxes((prev) =>
-        prev.map((b) => {
-          if (b.id !== boxId) return b;
-          let nextStatus = b.status;
-          if (type === 'DELIVERY') nextStatus = 'IN_USE';
-          else if (type === 'PICKUP') nextStatus = 'AVAILABLE';
-          else if (type === 'ALERT') nextStatus = 'ALERT';
+      // 1) 更新箱子狀態 + 寫入本機
+      let updatedBoxRef = null;
+      setBoxes((prev) => {
+        const next = prev.map((box) => {
+          if (box.id !== boxId) return box;
 
-          return {
-            ...b,
-            status: nextStatus,
-            lastUpdated: new Date().toISOString(),
+          let status = box.status;
+          if (type === 'DELIVERY') status = 'IN_USE';
+          else if (type === 'PICKUP') status = 'AVAILABLE';
+          else status = 'ALERT'; // 其他一律視為異常
+
+          const updated = {
+            ...box,
+            status,
+            lastUpdated: iso,
             lastEventType: type,
+            lastNote: note ?? '',
           };
-        }),
-      );
+          updatedBoxRef = updated;
+          return updated;
+        });
 
-      // 新增一筆歷史紀錄
+        AsyncStorage.setItem(
+          STORAGE_KEYS.BOXES,
+          JSON.stringify(next),
+        ).catch(() => {});
+
+        return next;
+      });
+
+      // 2) 新增歷史紀錄 + 寫入本機
       setHistory((prev) => {
-        const nowIso = new Date().toISOString();
-        const entry = {
-          id: `hist-${Date.now()}-${Math.random()
+        const box =
+          updatedBoxRef ||
+          boxes.find((b) => b.id === boxId) ||
+          null;
+        const user = currentUser;
+
+        const record = {
+          id: `ev-${Date.now()}-${Math.random()
             .toString(36)
             .slice(2, 6)}`,
           boxId,
-          boxName: targetBox?.name || boxId,
-          userId: currentUser?.id || null,
-          userName: currentUser?.name || '未知使用者',
+          boxName: box?.name || boxId,
+          userId: user?.id || null,
+          userName: user?.name || '未知使用者',
           type,
           note: note || '',
-          timestamp: nowIso,
-          dateLabel: buildDateLabel(nowIso),
+          timestamp: iso,
+          dateLabel: buildDateLabel(iso),
         };
 
-        const nextHistory = [entry, ...prev];
+        const nextHistory = [record, ...prev];
 
-        if (type === 'ALERT') {
+        AsyncStorage.setItem(
+          STORAGE_KEYS.HISTORY,
+          JSON.stringify(nextHistory),
+        ).catch(() => {});
+
+        // 異常事件要更新 Banner
+        if (type !== 'DELIVERY' && type !== 'PICKUP') {
           setLastAlertBoxId(boxId);
         }
 
         return nextHistory;
       });
     },
-    [boxes, currentUser],
+    [boxes, currentUser, setLastAlertBoxId],
   );
 
   const value = useMemo(
     () => ({
-      // 基本資料
+      hydrated,
+
       boxes,
       history,
       users,
 
-      // 目前使用者
-      currentUserId,
+      currentUserId: currentUserIdState,
       setCurrentUserId,
       currentUser,
 
-      // 異常 Banner 設定
       abnormalAlertEnabled,
       setAbnormalAlertEnabled,
+
       lastAlertBoxId,
       showAlertBanner,
       clearLastAlert,
 
-      // 事件紀錄
       logEvent,
     }),
     [
+      hydrated,
       boxes,
       history,
       users,
-      currentUserId,
+      currentUserIdState,
       currentUser,
       abnormalAlertEnabled,
       lastAlertBoxId,
       showAlertBanner,
+      setCurrentUserId,
+      setAbnormalAlertEnabled,
       clearLastAlert,
       logEvent,
     ],

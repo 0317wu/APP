@@ -1,6 +1,10 @@
 // App.js
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import {
+  NavigationContainer,
+  DefaultTheme,
+  DarkTheme,
+} from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
@@ -11,45 +15,57 @@ import HistoryScreen from './src/screens/HistoryScreen';
 import AnalyticsScreen from './src/screens/AnalyticsScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 
-import { ThemeProvider, useThemeColors } from './src/theme/ThemeContext';
+import {
+  ThemeProvider,
+  useThemeColors,
+} from './src/theme/ThemeContext';
 import { DataProvider } from './src/data/DataContext';
 
 const Tab = createBottomTabNavigator();
 
 function AppTabs() {
   const theme = useThemeColors();
+  const isDark = theme.theme === 'dark';
   const isAdmin = theme.role === 'admin';
+
+  // 套用 React Navigation 的 light/dark theme，再用我們自己的 palette 蓋掉顏色
+  const navTheme = {
+    ...(isDark ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
+      background: theme.background,
+      card: theme.card,
+      text: theme.text,
+      border: theme.cardBorder,
+      primary: theme.accent,
+    },
+  };
 
   return (
     <>
-      <StatusBar style={theme.isDark ? 'light' : 'dark'} />
-      <NavigationContainer theme={theme.navigationTheme}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <NavigationContainer theme={navTheme}>
         <Tab.Navigator
           screenOptions={({ route }) => ({
             headerShown: false,
-            tabBarActiveTintColor: theme.accent,
-            tabBarInactiveTintColor: theme.tabBarInactive,
             tabBarStyle: {
-              backgroundColor: theme.tabBar,
-              borderTopColor: theme.tabBarBorder,
+              backgroundColor: theme.tabBarBg,
+              borderTopColor: theme.cardBorder,
             },
-            tabBarIcon: ({ color, size, focused }) => {
-              let iconName = 'home-outline';
-              if (route.name === 'Home') {
-                iconName = focused ? 'home' : 'home-outline';
-              } else if (route.name === 'Boxes') {
-                iconName = focused ? 'cube' : 'cube-outline';
-              } else if (route.name === 'History') {
-                iconName = focused ? 'time' : 'time-outline';
-              } else if (route.name === 'Analytics') {
-                iconName = focused
-                  ? 'stats-chart'
-                  : 'stats-chart-outline';
-              } else if (route.name === 'Settings') {
-                iconName = focused
-                  ? 'settings'
-                  : 'settings-outline';
-              }
+            tabBarActiveTintColor: theme.tabBarActive,
+            tabBarInactiveTintColor: theme.tabBarInactive,
+            tabBarIcon: ({ color, size }) => {
+              let iconName = 'ellipse';
+              if (route.name === 'Home') iconName = 'home-outline';
+              else if (route.name === 'Boxes')
+                iconName = 'cube-outline';
+              else if (route.name === 'History')
+                iconName = 'time-outline';
+              else if (route.name === 'Analytics')
+                iconName = 'stats-chart-outline';
+              else if (route.name === 'Settings')
+                iconName = 'settings-outline';
+
               return (
                 <Ionicons
                   name={iconName}
@@ -75,7 +91,6 @@ function AppTabs() {
             component={HistoryScreen}
             options={{ title: '紀錄' }}
           />
-          {/* ✅ 只有管理員才會看到「統計」這個分頁 */}
           {isAdmin && (
             <Tab.Screen
               name="Analytics"

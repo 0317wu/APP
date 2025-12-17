@@ -12,10 +12,32 @@ import { useThemeColors } from '../theme/ThemeContext';
 import { useAppData } from '../data/DataContext';
 import { styles as globalStyles } from '../styles';
 
-function iconForType(type) {
-  if (type === 'DELIVERY') return 'download-outline';
-  if (type === 'PICKUP') return 'checkmark-done-outline';
-  return 'warning-outline';
+// 事件對應的圖示 / 文案 / 顏色
+function getEventMeta(type, theme) {
+  switch (type) {
+    case 'DELIVERY':
+      return {
+        icon: 'download-outline',
+        label: '放入包裹',
+        toneBg: theme.accentSoft,
+        toneColor: theme.accent,
+      };
+    case 'PICKUP':
+      return {
+        icon: 'checkmark-done-outline',
+        label: '領取完成',
+        toneBg: 'rgba(22,163,74,0.12)',      // success 綠系
+        toneColor: theme.success || '#16A34A',
+      };
+    default:
+      // 一律視為異常相關
+      return {
+        icon: 'warning-outline',
+        label: '異常事件',
+        toneBg: theme.dangerSoft,
+        toneColor: theme.danger,
+      };
+  }
 }
 
 export default function HistoryScreen() {
@@ -23,16 +45,22 @@ export default function HistoryScreen() {
   const { history } = useAppData();
   const [typeFilter, setTypeFilter] = useState('ALL');
 
+  // 根據類型過濾：全部 / 放入 / 領取 / 異常
   const filteredHistory = useMemo(() => {
     if (typeFilter === 'ALL') return history;
     if (typeFilter === 'ALERT') {
-      return history.filter((h) => h.type !== 'DELIVERY' && h.type !== 'PICKUP');
+      // 「異常」= 不是 DELIVERY / PICKUP 的其他事件
+      return history.filter(
+        (h) => h.type !== 'DELIVERY' && h.type !== 'PICKUP'
+      );
     }
     return history.filter((h) => h.type === typeFilter);
   }, [history, typeFilter]);
 
+  // 依照 dateLabel 分組成 SectionList 結構
   const sections = useMemo(() => {
     const map = new Map();
+
     filteredHistory.forEach((item) => {
       const label = item.dateLabel || '其他日期';
       if (!map.has(label)) {
@@ -40,7 +68,21 @@ export default function HistoryScreen() {
       }
       map.get(label).push(item);
     });
-    return Array.from(map.entries()).map(([title, data]) => ({
+
+    // 依照「今天 / 昨天 / 更早」排序
+    const order = ['今天', '昨天', '更早'];
+    const entries = Array.from(map.entries());
+
+    entries.sort((a, b) => {
+      const ia = order.indexOf(a[0]);
+      const ib = order.indexOf(b[0]);
+      if (ia === -1 && ib === -1) return 0;
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
+
+    return entries.map(([title, data]) => ({
       title,
       data,
     }));
@@ -48,7 +90,27 @@ export default function HistoryScreen() {
 
   return (
     <BaseScreen title="使用紀錄" scroll={false}>
+      {/* 上方篩選 pill */}
       <View style={{ paddingHorizontal: 20, paddingBottom: 12 }}>
+        <View style={globalStyles.sectionTitleRow}>
+          <Text
+            style={[
+              globalStyles.sectionTitle,
+              { color: theme.text },
+            ]}
+          >
+            篩選紀錄
+          </Text>
+          <Text
+            style={[
+              globalStyles.sectionHint,
+              { color: theme.subtleText },
+            ]}
+          >
+            共 {filteredHistory.length} 筆
+          </Text>
+        </View>
+
         <View style={globalStyles.pillRow}>
           {[
             { label: '全部', value: 'ALL' },
@@ -80,6 +142,7 @@ export default function HistoryScreen() {
                       color: active
                         ? theme.accent
                         : theme.chipText,
+                      fontWeight: active ? '600' : '400',
                     },
                   ]}
                 >
@@ -91,6 +154,7 @@ export default function HistoryScreen() {
         </View>
       </View>
 
+      {/* 主體：時間線 SectionList */}
       <SectionList
         sections={sections}
         keyExtractor={(item) => item.id}
@@ -99,7 +163,14 @@ export default function HistoryScreen() {
           paddingBottom: 24,
         }}
         renderSectionHeader={({ section: { title } }) => (
-          <View style={{ marginTop: 16, marginBottom: 6 }}>
+          <View
+            style={{
+              marginTop: 16,
+              marginBottom: 8,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}
+          >
             <Text
               style={{
                 fontSize: 13,
@@ -109,65 +180,140 @@ export default function HistoryScreen() {
             >
               {title}
             </Text>
+            <View
+              style={{
+                flex: 1,
+                height: 1,
+                backgroundColor: theme.divider,
+                marginLeft: 8,
+                opacity: 0.6,
+              }}
+            />
           </View>
         )}
-        renderItem={({ item }) => (
-          <View
-            style={[
-              globalStyles.card,
-              {
-                backgroundColor: theme.card,
-                marginBottom: 8,
-              },
-            ]}
-          >
-            <View style={globalStyles.cardRow}>
+        renderItem={({ item }) => {
+          const meta = getEventMeta(item.type, theme);
+
+          return (
+            <View
+              style={[
+                globalStyles.card,
+                {
+                  backgroundColor: theme.card,
+                  borderColor: theme.cardBorder,
+                  marginBottom: 8,
+                },
+              ]}
+            >
               <View
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 999,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: theme.accentSoft,
-                  marginRight: 12,
-                }}
+                style={[
+                  globalStyles.cardRow,
+                  { alignItems: 'center' },
+                ]}
               >
-                <Ionicons
-                  name={iconForType(item.type)}
-                  size={18}
-                  color={theme.accent}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={[
-                    globalStyles.cardTitle,
-                    { color: theme.text },
-                  ]}
+                {/* 左邊 icon 圓圈 */}
+                <View
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 999,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: 12,
+                    backgroundColor: meta.toneBg,
+                  }}
                 >
-                  {item.boxName}
-                </Text>
+                  <Ionicons
+                    name={meta.icon}
+                    size={18}
+                    color={meta.toneColor}
+                  />
+                </View>
+
+                {/* 中間文字區塊 */}
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={[
+                      globalStyles.cardTitle,
+                      { color: theme.text },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {item.boxName}
+                  </Text>
+                  <Text
+                    style={[
+                      globalStyles.cardSubtitle,
+                      { color: theme.mutedText },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {item.userName}
+                  </Text>
+
+                  {/* 事件類型小標籤 + 備註 */}
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      marginTop: 6,
+                    }}
+                  >
+                    <View
+                      style={[
+                        globalStyles.chip,
+                        {
+                          paddingVertical: 3,
+                          paddingHorizontal: 8,
+                          borderColor: meta.toneBg,
+                          backgroundColor: meta.toneBg,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          globalStyles.chipText,
+                          {
+                            fontSize: 11,
+                            color: meta.toneColor,
+                          },
+                        ]}
+                      >
+                        {meta.label}
+                      </Text>
+                    </View>
+                    {item.note ? (
+                      <Text
+                        style={{
+                          marginLeft: 8,
+                          fontSize: 11,
+                          color: theme.subtleText,
+                        }}
+                        numberOfLines={1}
+                      >
+                        {item.note}
+                      </Text>
+                    ) : null}
+                  </View>
+                </View>
+
+                {/* 右邊時間 */}
                 <Text
                   style={[
                     globalStyles.cardSubtitle,
-                    { color: theme.mutedText },
+                    {
+                      color: theme.mutedText,
+                      marginLeft: 8,
+                      fontVariant: ['tabular-nums'],
+                    },
                   ]}
                 >
-                  {item.userName}
+                  {item.timestamp?.slice(11, 16)}
                 </Text>
               </View>
-              <Text
-                style={[
-                  globalStyles.cardSubtitle,
-                  { color: theme.mutedText },
-                ]}
-              >
-                {item.timestamp?.slice(11, 16)}
-              </Text>
             </View>
-          </View>
-        )}
+          );
+        }}
         ListEmptyComponent={
           <View style={globalStyles.listEmptyContainer}>
             <Text
