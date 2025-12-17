@@ -1,5 +1,5 @@
 // src/screens/BoxDetailScreen.js
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
@@ -11,14 +11,20 @@ import { useAppData } from '../data/DataContext';
 import { styles as globalStyles } from '../styles';
 import { getStatusMeta } from '../utils/boxUtils';
 import { formatDateTime } from '../utils/timeUtils';
+import { useToast } from '../components/ToastContext';
 
 export default function BoxDetailScreen() {
   const theme = useThemeColors();
   const route = useRoute();
-  const { boxId } = route.params ?? {};
   const { boxes, logEvent } = useAppData();
+  const { showToast } = useToast();
 
-  const box = boxes.find((b) => b.id === boxId);
+  const boxId = route.params?.boxId;
+
+  const box = useMemo(
+    () => boxes.find((b) => b.id === boxId) || null,
+    [boxes, boxId],
+  );
 
   if (!box) {
     return (
@@ -30,7 +36,7 @@ export default function BoxDetailScreen() {
               { color: theme.mutedText },
             ]}
           >
-            找不到此共享箱。
+            找不到這個共享箱，可能已被移除。
           </Text>
         </View>
       </BaseScreen>
@@ -38,38 +44,37 @@ export default function BoxDetailScreen() {
   }
 
   const meta = getStatusMeta(box.status);
-  const badgeBg =
-    meta.tone === 'success'
-      ? theme.accentSoft
-      : meta.tone === 'danger'
-      ? theme.dangerSoft
-      : theme.chipBg;
-  const badgeColor =
-    meta.tone === 'success'
-      ? theme.accent
-      : meta.tone === 'danger'
-      ? theme.danger
-      : theme.chipText;
 
   const handleDelivery = () => {
-    logEvent({ boxId: box.id, type: 'DELIVERY', note: '' });
+    logEvent({
+      boxId: box.id,
+      type: 'DELIVERY',
+      note: '模擬放入包裹',
+    });
+    showToast(`已為 ${box.name} 記錄：放入包裹`);
   };
 
   const handlePickup = () => {
-    logEvent({ boxId: box.id, type: 'PICKUP', note: '' });
+    logEvent({
+      boxId: box.id,
+      type: 'PICKUP',
+      note: '模擬領取完成',
+    });
+    showToast(`已為 ${box.name} 記錄：領取完成`);
   };
 
-  const handleAlert = () => {
+  const handleMarkAbnormal = () => {
     logEvent({
       boxId: box.id,
       type: 'ALERT',
       note: '手動標記異常',
     });
+    showToast(`已標記 ${box.name} 為異常狀態`);
   };
 
   return (
     <BaseScreen title={box.name} showBack>
-      {/* 上方箱子資訊卡片 */}
+      {/* 上方狀態卡片 */}
       <View
         style={[
           globalStyles.card,
@@ -79,7 +84,30 @@ export default function BoxDetailScreen() {
           },
         ]}
       >
-        <View style={globalStyles.cardRow}>
+        <View
+          style={[
+            globalStyles.cardRow,
+            { alignItems: 'center' },
+          ]}
+        >
+          <View
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 999,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 12,
+              backgroundColor: theme.background,
+            }}
+          >
+            <Ionicons
+              name="cube-outline"
+              size={22}
+              color={theme.accent}
+            />
+          </View>
+
           <View style={{ flex: 1 }}>
             <Text
               style={[
@@ -100,23 +128,42 @@ export default function BoxDetailScreen() {
             <Text
               style={[
                 globalStyles.cardSubtitle,
-                { color: theme.mutedText, marginTop: 4 },
+                {
+                  color: theme.subtleText,
+                  marginTop: 4,
+                  fontSize: 11,
+                },
               ]}
             >
-              上次更新：{formatDateTime(box.lastUpdated)}
+              最後更新：{formatDateTime(box.lastUpdated)}
             </Text>
           </View>
-          <View style={{ alignItems: 'flex-end' }}>
+
+          <View>
             <View
               style={[
                 globalStyles.statusBadge,
-                { backgroundColor: badgeBg },
+                {
+                  backgroundColor:
+                    meta.tone === 'success'
+                      ? theme.accentSoft
+                      : meta.tone === 'danger'
+                      ? theme.dangerSoft
+                      : theme.chipBg,
+                },
               ]}
             >
               <Text
                 style={[
                   globalStyles.statusBadgeText,
-                  { color: badgeColor },
+                  {
+                    color:
+                      meta.tone === 'success'
+                        ? theme.accent
+                        : meta.tone === 'danger'
+                        ? theme.danger
+                        : theme.chipText,
+                  },
                 ]}
               >
                 {meta.label}
@@ -126,7 +173,7 @@ export default function BoxDetailScreen() {
         </View>
       </View>
 
-      {/* 快速操作區塊標題 */}
+      {/* 快速操作區塊 */}
       <View style={globalStyles.sectionHeader}>
         <Text
           style={[
@@ -134,40 +181,31 @@ export default function BoxDetailScreen() {
             { color: theme.text },
           ]}
         >
-          快速操作（模擬事件）
-        </Text>
-        <Text
-          style={[
-            globalStyles.sectionHint,
-            { color: theme.mutedText },
-          ]}
-        >
-          方便在沒有實體硬體時，直接模擬真實情境。
+          快速操作
         </Text>
       </View>
 
-      {/* ✅ 全新卡片式按鈕 UI */}
       <View style={globalStyles.quickActionsContainer}>
         {/* 放入包裹 */}
         <PressableScale
+          onPress={handleDelivery}
           style={[
             globalStyles.quickActionCard,
             {
-              backgroundColor: theme.accentSoft,
-              borderColor: theme.accent,
+              backgroundColor: theme.card,
+              borderColor: theme.cardBorder,
             },
           ]}
-          onPress={handleDelivery}
         >
           <View
             style={[
               globalStyles.quickActionIconWrapper,
-              { backgroundColor: 'rgba(37,99,235,0.12)' },
+              { backgroundColor: theme.accentSoft },
             ]}
           >
             <Ionicons
-              name="cube-outline"
-              size={20}
+              name="download-outline"
+              size={18}
               color={theme.accent}
             />
           </View>
@@ -178,45 +216,39 @@ export default function BoxDetailScreen() {
                 { color: theme.text },
               ]}
             >
-              放入包裹（模擬）
+              模擬放入包裹
             </Text>
             <Text
               style={[
                 globalStyles.quickActionSubtitle,
                 { color: theme.mutedText },
               ]}
-              numberOfLines={2}
             >
-              模擬外送員或管理員將餐點放入共享箱。
+              用來模擬物流將包裹放入共享箱的情境。
             </Text>
           </View>
-          <Ionicons
-            name="chevron-forward"
-            size={18}
-            color={theme.subtleText}
-          />
         </PressableScale>
 
         {/* 領取完成 */}
         <PressableScale
+          onPress={handlePickup}
           style={[
             globalStyles.quickActionCard,
             {
-              backgroundColor: 'rgba(34,197,94,0.08)',
-              borderColor: theme.success,
+              backgroundColor: theme.card,
+              borderColor: theme.cardBorder,
             },
           ]}
-          onPress={handlePickup}
         >
           <View
             style={[
               globalStyles.quickActionIconWrapper,
-              { backgroundColor: 'rgba(34,197,94,0.14)' },
+              { backgroundColor: theme.successSoft },
             ]}
           >
             <Ionicons
               name="checkmark-done-outline"
-              size={20}
+              size={18}
               color={theme.success}
             />
           </View>
@@ -227,45 +259,39 @@ export default function BoxDetailScreen() {
                 { color: theme.text },
               ]}
             >
-              領取完成（模擬）
+              模擬領取完成
             </Text>
             <Text
               style={[
                 globalStyles.quickActionSubtitle,
                 { color: theme.mutedText },
               ]}
-              numberOfLines={2}
             >
-              模擬住戶已到場領取，箱子恢復為可預約狀態。
+              住戶成功開啟共享箱並完成領取。
             </Text>
           </View>
-          <Ionicons
-            name="chevron-forward"
-            size={18}
-            color={theme.subtleText}
-          />
         </PressableScale>
 
         {/* 標記異常 */}
         <PressableScale
+          onPress={handleMarkAbnormal}
           style={[
             globalStyles.quickActionCard,
             {
-              backgroundColor: theme.dangerSoft,
-              borderColor: theme.danger,
+              backgroundColor: theme.card,
+              borderColor: theme.cardBorder,
             },
           ]}
-          onPress={handleAlert}
         >
           <View
             style={[
               globalStyles.quickActionIconWrapper,
-              { backgroundColor: 'rgba(220,38,38,0.16)' },
+              { backgroundColor: theme.dangerSoft },
             ]}
           >
             <Ionicons
               name="alert-circle-outline"
-              size={20}
+              size={18}
               color={theme.danger}
             />
           </View>
@@ -273,26 +299,20 @@ export default function BoxDetailScreen() {
             <Text
               style={[
                 globalStyles.quickActionTitle,
-                { color: theme.danger },
+                { color: theme.text },
               ]}
             >
-              標記異常（模擬）
+              標記異常
             </Text>
             <Text
               style={[
                 globalStyles.quickActionSubtitle,
                 { color: theme.mutedText },
               ]}
-              numberOfLines={2}
             >
-              當發現震動、開門異常等情況時，手動標記為異常。
+              模擬震動偵測、長時間未取件等異常狀況。
             </Text>
           </View>
-          <Ionicons
-            name="chevron-forward"
-            size={18}
-            color={theme.subtleText}
-          />
         </PressableScale>
       </View>
     </BaseScreen>

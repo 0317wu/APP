@@ -20,6 +20,7 @@ import {
   useThemeColors,
 } from './src/theme/ThemeContext';
 import { DataProvider } from './src/data/DataContext';
+import { ToastProvider } from './src/components/ToastContext';
 
 const Tab = createBottomTabNavigator();
 
@@ -28,7 +29,6 @@ function AppTabs() {
   const isDark = theme.theme === 'dark';
   const isAdmin = theme.role === 'admin';
 
-  // 套用 React Navigation 的 light/dark theme，再用我們自己的 palette 蓋掉顏色
   const navTheme = {
     ...(isDark ? DarkTheme : DefaultTheme),
     colors: {
@@ -113,7 +113,9 @@ export default function App() {
   return (
     <ThemeProvider>
       <DataProvider>
-        <AppTabs />
+        <ToastProvider>
+          <AppTabs />
+        </ToastProvider>
       </DataProvider>
     </ThemeProvider>
   );
