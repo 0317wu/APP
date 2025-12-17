@@ -7,14 +7,17 @@ import {
   StyleSheet,
   Switch,
   TouchableOpacity,
+  Alert,
+  TextInput,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-// ✅ 一定要是 ../ 不是 ./
 import BaseScreen from '../components/BaseScreen';
 import PressableScale from '../components/PressableScale';
 import { useThemeColors } from '../theme/ThemeContext';
 import { useAppData } from '../data/DataContext';
+import { useToast } from '../components/ToastContext';
 
 const USERS = [
   {
@@ -46,24 +49,34 @@ export default function SettingsScreen() {
     setCurrentUserId,
     abnormalAlertEnabled,
     setAbnormalAlertEnabled,
+    seedDemoData,
+    adminPin,
+    setAdminPin,
   } = useAppData();
+
+  const { showToast } = useToast();
 
   const isDarkMode = theme === 'dark';
   const isAdmin = role === 'admin';
+  const hasAdminPin = !!adminPin;
 
   const [selectedUser, setSelectedUser] = useState(
-    currentUserId || 'user-001'
+    currentUserId || 'user-001',
   );
   const [localAbnormalEnabled, setLocalAbnormalEnabled] =
     useState(
       typeof abnormalAlertEnabled === 'boolean'
         ? abnormalAlertEnabled
-        : true
+        : true,
     );
+
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pinInput, setPinInput] = useState('');
+  const [isSettingPin, setIsSettingPin] = useState(false);
 
   const roleText = useMemo(
     () => (isAdmin ? '管理員模式' : '一般住戶'),
-    [isAdmin]
+    [isAdmin],
   );
 
   const handleSelectUser = (userId) => {
@@ -81,15 +94,95 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleSwitchRole = (nextRole) => {
-    if (typeof toggleRole === 'function') {
-      toggleRole(nextRole);
+  const openPinModalForRole = (nextRole) => {
+    if (nextRole === 'resident') {
+      // 退回一般模式不需要 PIN
+      if (typeof toggleRole === 'function') {
+        toggleRole('resident');
+      }
+      return;
     }
+
+    // 切換到管理員模式
+    if (!hasAdminPin) {
+      // 第一次：設定 PIN
+      setIsSettingPin(true);
+      setPinInput('');
+      setShowPinModal(true);
+    } else {
+      // 已有 PIN：驗證 PIN
+      setIsSettingPin(false);
+      setPinInput('');
+      setShowPinModal(true);
+    }
+  };
+
+  const handleSwitchRole = (nextRole) => {
+    if (nextRole === role) return;
+    openPinModalForRole(nextRole);
   };
 
   const handleToggleTheme = () => {
     if (typeof toggleTheme === 'function') {
       toggleTheme();
+    }
+  };
+
+  const handleSeedDemoData = () => {
+    Alert.alert(
+      '產生模擬資料',
+      '這將覆蓋目前的箱子狀態與歷史紀錄，改為一組示範用資料，確定要繼續嗎？',
+      [
+        { text: '取消', style: 'cancel' },
+        {
+          text: '確定',
+          style: 'destructive',
+          onPress: () => {
+            if (typeof seedDemoData === 'function') {
+              seedDemoData();
+              showToast(
+                '已產生一組模擬資料，歡迎前往統計頁查看',
+              );
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const handleClosePinModal = () => {
+    setShowPinModal(false);
+    setPinInput('');
+  };
+
+  const handleConfirmPin = () => {
+    const input = pinInput.trim();
+    if (isSettingPin) {
+      if (input.length < 4) {
+        showToast('請輸入至少 4 碼數字作為管理員 PIN');
+        return;
+      }
+      setAdminPin(input);
+      if (typeof toggleRole === 'function') {
+        toggleRole('admin');
+      }
+      setShowPinModal(false);
+      showToast('已設定管理員 PIN，並切換為管理員模式');
+    } else {
+      if (!hasAdminPin) {
+        showToast('尚未設定 PIN，請重新嘗試');
+        setShowPinModal(false);
+        return;
+      }
+      if (input === adminPin) {
+        if (typeof toggleRole === 'function') {
+          toggleRole('admin');
+        }
+        setShowPinModal(false);
+        showToast('驗證成功，已切換為管理員模式');
+      } else {
+        showToast('PIN 錯誤，請再試一次');
+      }
     }
   };
 
@@ -111,7 +204,10 @@ export default function SettingsScreen() {
           ]}
         >
           <Text
-            style={[styles.cardTitle, { color: palette.text }]}
+            style={[
+              styles.cardTitle,
+              { color: palette.text },
+            ]}
           >
             外觀與角色
           </Text>
@@ -154,7 +250,7 @@ export default function SettingsScreen() {
 
           <View style={styles.divider} />
 
-          {/* 管理員模式切換 */}
+          {/* 管理員模式切換（有 PIN 保護） */}
           <View style={styles.rowBetween}>
             <View style={styles.textBlock}>
               <Text
@@ -168,13 +264,15 @@ export default function SettingsScreen() {
                   { color: palette.subtleText },
                 ]}
               >
-                開啟後可檢視統計與所有箱子的狀態。
+                開啟後可檢視統計與所有箱子的狀態，並可以進行進階操作。
               </Text>
             </View>
             <Switch
               value={isAdmin}
               onValueChange={(val) =>
-                handleSwitchRole(val ? 'admin' : 'resident')
+                handleSwitchRole(
+                  val ? 'admin' : 'resident',
+                )
               }
               trackColor={{
                 false: '#E5E7EB',
@@ -186,7 +284,9 @@ export default function SettingsScreen() {
 
           <View style={styles.rolePillsRow}>
             <PressableScale
-              onPress={() => handleSwitchRole('resident')}
+              onPress={() =>
+                handleSwitchRole('resident')
+              }
               style={[
                 styles.rolePill,
                 {
@@ -246,6 +346,9 @@ export default function SettingsScreen() {
             ]}
           >
             目前身分：{roleText}
+            {hasAdminPin
+              ? '（已設定管理員 PIN）'
+              : '（尚未設定管理員 PIN）'}
           </Text>
         </View>
 
@@ -260,7 +363,10 @@ export default function SettingsScreen() {
           ]}
         >
           <Text
-            style={[styles.cardTitle, { color: palette.text }]}
+            style={[
+              styles.cardTitle,
+              { color: palette.text },
+            ]}
           >
             使用者帳號
           </Text>
@@ -278,7 +384,9 @@ export default function SettingsScreen() {
             return (
               <TouchableOpacity
                 key={u.id}
-                onPress={() => handleSelectUser(u.id)}
+                onPress={() =>
+                  handleSelectUser(u.id)
+                }
                 activeOpacity={0.7}
               >
                 <View
@@ -287,7 +395,7 @@ export default function SettingsScreen() {
                     {
                       borderColor: active
                         ? palette.primary
-                        : '透明',
+                        : 'transparent',
                       backgroundColor: active
                         ? palette.primarySoft
                         : 'transparent',
@@ -338,7 +446,10 @@ export default function SettingsScreen() {
           ]}
         >
           <Text
-            style={[styles.cardTitle, { color: palette.text }]}
+            style={[
+              styles.cardTitle,
+              { color: palette.text },
+            ]}
           >
             系統提醒
           </Text>
@@ -375,12 +486,167 @@ export default function SettingsScreen() {
                 true: '#FCA5A5',
               }}
               thumbColor={
-                localAbnormalEnabled ? '#DC2626' : '#FFFFFF'
+                localAbnormalEnabled
+                  ? '#DC2626'
+                  : '#FFFFFF'
               }
             />
           </View>
         </View>
+
+        {/* 模擬資料 / Demo 模式（只在管理員顯示） */}
+        {isAdmin && (
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: palette.card,
+                borderColor: palette.cardBorder,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.cardTitle,
+                { color: palette.text },
+              ]}
+            >
+              模擬資料（Demo 模式）
+            </Text>
+            <Text
+              style={[
+                styles.cardSubtitle,
+                { color: palette.subtleText },
+              ]}
+            >
+              產生一組包含過去 7 天共享箱使用紀錄的範例資料，方便展示統計圖與歷史紀錄。
+            </Text>
+
+            <PressableScale
+              onPress={handleSeedDemoData}
+              style={[
+                styles.demoButton,
+                {
+                  backgroundColor: palette.primarySoft,
+                  borderColor: palette.primary,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.demoButtonText,
+                  { color: palette.primary },
+                ]}
+              >
+                一鍵產生模擬資料
+              </Text>
+            </PressableScale>
+          </View>
+        )}
       </ScrollView>
+
+      {/* 管理員 PIN Modal */}
+      <Modal
+        visible={showPinModal}
+        transparent
+        animationType="fade"
+        onRequestClose={handleClosePinModal}
+      >
+        <View style={styles.pinOverlay}>
+          <View
+            style={[
+              styles.pinCard,
+              {
+                backgroundColor: palette.card,
+                borderColor: palette.cardBorder,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.pinTitle,
+                { color: palette.text },
+              ]}
+            >
+              {isSettingPin
+                ? '設定管理員 PIN'
+                : '輸入管理員 PIN'}
+            </Text>
+            <Text
+              style={[
+                styles.pinSubtitle,
+                { color: palette.subtleText },
+              ]}
+            >
+              {isSettingPin
+                ? '第一次使用管理員模式，請設定一組 4 碼以上的數字密碼。'
+                : '切換為管理員模式前，請先輸入管理員 PIN。'}
+            </Text>
+
+            <TextInput
+              value={pinInput}
+              onChangeText={setPinInput}
+              placeholder={
+                isSettingPin
+                  ? '請輸入新的 PIN（至少 4 碼）'
+                  : '請輸入 PIN'
+              }
+              placeholderTextColor={palette.subtleText}
+              keyboardType="number-pad"
+              secureTextEntry
+              maxLength={6}
+              style={[
+                styles.pinInput,
+                {
+                  borderColor: palette.cardBorder,
+                  color: palette.text,
+                },
+              ]}
+            />
+
+            <View style={styles.pinButtonRow}>
+              <PressableScale
+                onPress={handleClosePinModal}
+                style={[
+                  styles.pinButton,
+                  {
+                    borderColor: palette.cardBorder,
+                    backgroundColor: 'transparent',
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.pinButtonText,
+                    { color: palette.subtleText },
+                  ]}
+                >
+                  取消
+                </Text>
+              </PressableScale>
+              <PressableScale
+                onPress={handleConfirmPin}
+                style={[
+                  styles.pinButton,
+                  {
+                    borderColor: palette.primary,
+                    backgroundColor: palette.primarySoft,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.pinButtonText,
+                    { color: palette.primary },
+                  ]}
+                >
+                  {isSettingPin ? '設定並啟用' : '驗證'}
+                </Text>
+              </PressableScale>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </BaseScreen>
   );
 }
@@ -456,5 +722,64 @@ const styles = StyleSheet.create({
   },
   userTextBlock: {
     flex: 1,
+  },
+  demoButton: {
+    marginTop: 4,
+    borderRadius: 999,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  demoButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+
+  // PIN Modal
+  pinOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15,23,42,0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pinCard: {
+    width: '85%',
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 18,
+    borderWidth: 1,
+  },
+  pinTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  pinSubtitle: {
+    fontSize: 13,
+    marginBottom: 12,
+  },
+  pinInput: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 16,
+    marginBottom: 12,
+  },
+  pinButtonRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 4,
+    gap: 8,
+  },
+  pinButton: {
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+  },
+  pinButtonText: {
+    fontSize: 13,
+    fontWeight: '500',
   },
 });

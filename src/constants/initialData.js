@@ -13,6 +13,7 @@ export const INITIAL_BOXES = [
     location: '一樓 電梯旁',
     status: 'IN_USE', // AVAILABLE | IN_USE | ALERT
     lastUpdated: new Date().toISOString(),
+    isFavorite: false,
   },
   {
     id: 'BOX-B',
@@ -20,6 +21,7 @@ export const INITIAL_BOXES = [
     location: '一樓 管理室旁',
     status: 'AVAILABLE',
     lastUpdated: new Date().toISOString(),
+    isFavorite: false,
   },
   {
     id: 'BOX-C',
@@ -27,6 +29,7 @@ export const INITIAL_BOXES = [
     location: 'B1 機車停車區',
     status: 'ALERT',
     lastUpdated: new Date().toISOString(),
+    isFavorite: false,
   },
 ];
 

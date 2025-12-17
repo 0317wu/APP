@@ -151,7 +151,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    marginTop: 8,
+    marginTop: 4,
   },
   ghostButtonText: {
     fontSize: 13,
@@ -212,6 +212,40 @@ export const styles = StyleSheet.create({
   },
   settingsSubtitle: {
     fontSize: 12,
+  },
+
+  // BoxDetail 快速操作用
+  quickActionsContainer: {
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  quickActionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    marginBottom: 8,
+  },
+  quickActionIconWrapper: {
+    width: 36,
+    height: 36,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  quickActionTextWrapper: {
+    flex: 1,
+  },
+  quickActionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  quickActionSubtitle: {
+    fontSize: 12,
+    marginTop: 2,
   },
 });
 
