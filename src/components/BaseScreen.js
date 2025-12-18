@@ -18,92 +18,81 @@ export default function BaseScreen({
   desc,
   children,
   scroll = false,
-  showBack = false,
-  right,
+  showBack, // ✅ 新增：可強制控制是否顯示返回
+  right,    // ✅ 可選：右側放 icon/button
 }) {
   const theme = useThemeColors();
   const navigation = useNavigation();
+
+  const canGoBack = typeof navigation?.canGoBack === 'function'
+    ? navigation.canGoBack()
+    : false;
+
+  // ✅ 預設：只有能返回才顯示；若 showBack 明確給 false，則強制不顯示
+  const shouldShowBack = typeof showBack === 'boolean' ? showBack : canGoBack;
 
   const Container = scroll ? ScrollView : View;
 
   return (
     <SafeAreaView
-      style={[
-        globalStyles.container,
-        { backgroundColor: theme.background },
-      ]}
+      style={{
+        flex: 1,
+        backgroundColor: theme.bg,
+      }}
     >
-      {/* Header 區塊 */}
-      <View style={globalStyles.header}>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          {/* 左側：返回鍵 + 標題 */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              flex: 1,
-            }}
-          >
-            {showBack && (
+      {/* Header */}
+      <View style={[globalStyles.header, { paddingHorizontal: 20 }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {/* Left */}
+          <View style={{ width: 40, alignItems: 'flex-start' }}>
+            {shouldShowBack ? (
               <TouchableOpacity
-                onPress={() =>
-                  navigation.canGoBack() && navigation.goBack()
-                }
-                style={{ marginRight: 8, padding: 4 }}
+                onPress={() => navigation.goBack()}
+                activeOpacity={0.7}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 12,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: theme.card,
+                  borderWidth: 1,
+                  borderColor: theme.cardBorder,
+                }}
               >
-                <Ionicons
-                  name="chevron-back"
-                  size={22}
-                  color={theme.headerText}
-                />
+                <Ionicons name="chevron-back" size={20} color={theme.text} />
               </TouchableOpacity>
-            )}
-
-            <View style={{ flex: 1 }}>
-              {title ? (
-                <Text
-                  style={[
-                    globalStyles.title,
-                    { color: theme.headerText },
-                  ]}
-                  numberOfLines={1}
-                >
-                  {title}
-                </Text>
-              ) : null}
-              {desc ? (
-                <Text
-                  style={[
-                    globalStyles.desc,
-                    { color: theme.subtleText },
-                  ]}
-                  numberOfLines={2}
-                >
-                  {desc}
-                </Text>
-              ) : null}
-            </View>
+            ) : null}
           </View>
 
-          {/* 右側自訂按鈕區（可選） */}
-          {right ? (
-            <View style={{ marginLeft: 8 }}>{right}</View>
-          ) : null}
+          {/* Center */}
+          <View style={{ flex: 1 }}>
+            {title ? (
+              <Text
+                style={[globalStyles.title, { color: theme.headerText }]}
+                numberOfLines={1}
+              >
+                {title}
+              </Text>
+            ) : null}
+            {desc ? (
+              <Text style={[globalStyles.desc, { color: theme.subtleText }]}>
+                {desc}
+              </Text>
+            ) : null}
+          </View>
+
+          {/* Right */}
+          <View style={{ width: 40, alignItems: 'flex-end' }}>
+            {right || null}
+          </View>
         </View>
       </View>
 
-      {/* 內容區 */}
+      {/* Body */}
       <Container
         style={{ flex: 1 }}
-        contentContainerStyle={
-          scroll ? globalStyles.scrollContent : undefined
-        }
+        contentContainerStyle={scroll ? globalStyles.scrollContent : undefined}
         showsVerticalScrollIndicator={false}
       >
         {children}

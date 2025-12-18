@@ -2,251 +2,95 @@
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
-  // 共用外層容器
-  container: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
+  container: { flex: 1, paddingHorizontal: 20 },
+  header: { paddingTop: 8, paddingBottom: 16 },
+  title: { fontSize: 24, fontWeight: '700', letterSpacing: 0.3 },
+  desc: { marginTop: 4, fontSize: 13 },
+  scrollContent: { paddingBottom: 24 },
 
-  // Header
-  header: {
-    paddingTop: 8,
-    paddingBottom: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
-  desc: {
-    marginTop: 4,
-    fontSize: 13,
-  },
+  card: { borderRadius: 20, padding: 16, marginBottom: 12, borderWidth: 1 },
+  cardRow: { flexDirection: 'row', alignItems: 'flex-start' },
+  cardTitle: { fontSize: 16, fontWeight: '600' },
+  cardSubtitle: { fontSize: 13, marginTop: 2 },
 
-  // Scroll 內容
-  scrollContent: {
-    paddingBottom: 24,
-  },
-
-  // 卡片
-  card: {
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: 14,
-    marginBottom: 12,
-  },
-  cardRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  cardSubtitle: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-
-  // 小標籤 / Chip
-  chip: {
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  chipText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-
-  // 警示 Banner
   banner: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 16,
-    marginHorizontal: 20,
-    marginBottom: 12,
-    gap: 8,
+    marginBottom: 16,
   },
-  bannerText: {
-    flex: 1,
-    fontSize: 13,
-  },
+  bannerText: { flex: 1, marginLeft: 8, fontSize: 13, lineHeight: 18 },
 
-  // 狀態 Badge
-  statusBadge: {
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  statusBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
+  chip: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1 },
+  chipText: { fontSize: 12, fontWeight: '500' },
 
-  // 區塊標題（首頁等）
-  sectionHeader: {
-    paddingHorizontal: 20,
-    marginTop: 4,
-    marginBottom: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-  sectionTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    marginBottom: 4,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  sectionHint: {
-    fontSize: 12,
-  },
-
-  // 指標卡片（Home / Analytics）
-  metricRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
+  metricRow: { flexDirection: 'row', marginBottom: 12 },
   metricCard: {
-    borderRadius: 16,
+    flex: 1,
+    borderRadius: 18,
+    paddingVertical: 14,
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginHorizontal: 4,
+    marginRight: 8,
+    borderWidth: 1,
   },
-  metricLabel: {
-    fontSize: 11,
-  },
-  metricValue: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
+  metricValue: { fontSize: 20, fontWeight: '700' },
+  metricLabel: { marginTop: 4, fontSize: 12 },
 
-  // 主要按鈕 / 次要按鈕
-  primaryButton: {
-    borderRadius: 999,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8, marginBottom: 4 },
+  sectionTitle: { fontSize: 15, fontWeight: '600' },
+  sectionHint: { marginLeft: 6, fontSize: 12 },
+  sectionHeader: { marginTop: 16, marginBottom: 10 },
+
+  pillRow: { flexDirection: 'row', marginBottom: 12 },
+  pill: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, marginRight: 8 },
+  pillText: { fontSize: 12 },
+  pillTextActive: { fontWeight: '600' },
+
+  searchBar: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 8,
-  },
-  primaryButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  ghostButton: {
-    borderRadius: 999,
+    borderRadius: 14,
+    paddingHorizontal: 10,
     paddingVertical: 8,
-    paddingHorizontal: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    marginTop: 4,
-  },
-  ghostButtonText: {
-    fontSize: 13,
-    fontWeight: '500',
-  },
-
-  // 篩選用 pill
-  pillRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 8,
-  },
-  pill: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    marginBottom: 12,
     borderWidth: 1,
   },
-  pillText: {
-    fontSize: 13,
-  },
+  searchInput: { flex: 1, fontSize: 14, marginLeft: 6 },
 
-  // 條狀圖（Analytics 用）
-  barRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 4,
-  },
-  barLabel: {
-    width: 72,
-    fontSize: 12,
-  },
-  barTrack: {
-    flex: 1,
-    height: 8,
-    borderRadius: 999,
-    overflow: 'hidden',
-  },
-  barFill: {
-    height: '100%',
-    borderRadius: 999,
-  },
+  statusBadge: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'flex-start' },
+  statusBadgeText: { fontSize: 11, fontWeight: '600' },
 
-  // 空列表
-  listEmptyContainer: {
-    paddingVertical: 40,
-    alignItems: 'center',
-  },
-  listEmptyText: {
-    fontSize: 13,
-  },
+  listEmptyContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 40 },
+  listEmptyText: { fontSize: 13 },
 
-  // 設定頁小標題（如果有用到）
-  settingsTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  settingsSubtitle: {
-    fontSize: 12,
-  },
+  barRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  barLabel: { width: 70, fontSize: 11 },
+  barTrack: { flex: 1, height: 10, borderRadius: 999, overflow: 'hidden' },
+  barFill: { height: '100%', borderRadius: 999 },
 
-  // BoxDetail 快速操作用
-  quickActionsContainer: {
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  quickActionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 16,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    marginBottom: 8,
-  },
-  quickActionIconWrapper: {
-    width: 36,
-    height: 36,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-  },
-  quickActionTextWrapper: {
-    flex: 1,
-  },
-  quickActionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  quickActionSubtitle: {
-    fontSize: 12,
-    marginTop: 2,
-  },
+  settingsCard: { borderRadius: 20, padding: 16, marginBottom: 12, borderWidth: 1 },
+  settingsTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  settingsTitle: { fontSize: 15, fontWeight: '600' },
+  settingsSubtitle: { fontSize: 12 },
+
+  // ✅ 修首頁「快速操作」怪長條
+  quickTileRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
+  quickTile: { flex: 1, borderRadius: 18, padding: 14, borderWidth: 1, minHeight: 92, justifyContent: 'space-between' },
+  quickTileTop: { flexDirection: 'row', alignItems: 'center' },
+  quickTileIconWrap: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+  quickTileTitle: { fontSize: 14, fontWeight: '700' },
+  quickTileSubtitle: { marginTop: 8, fontSize: 12, lineHeight: 17 },
+  lockPill: { alignSelf: 'flex-start', marginTop: 8, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1 },
+  lockPillText: { fontSize: 11, fontWeight: '700' },
+
+  quickActionsContainer: { marginBottom: 24 },
+  quickActionCard: { flexDirection: 'row', alignItems: 'center', borderRadius: 16, paddingVertical: 10, paddingHorizontal: 12, borderWidth: 1, marginBottom: 10 },
+  quickActionIconWrapper: { width: 36, height: 36, borderRadius: 999, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+  quickActionTextWrapper: { flex: 1 },
+  quickActionTitle: { fontSize: 14, fontWeight: '600' },
+  quickActionSubtitle: { fontSize: 12, marginTop: 2 },
 });
 
 export default styles;

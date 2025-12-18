@@ -1,18 +1,8 @@
 // src/theme/ThemeContext.js
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useMemo,
-  useCallback,
-  useEffect,
-} from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useContext, useMemo, useCallback, useState } from 'react';
+import { DefaultTheme, DarkTheme } from '@react-navigation/native';
 
 const ThemeContext = createContext(null);
-
-const STORAGE_THEME_KEY = '@iot_app/theme';
-const STORAGE_ROLE_KEY = '@iot_app/role';
 
 const lightPalette = {
   background: '#F3F4F6',
@@ -21,146 +11,122 @@ const lightPalette = {
   text: '#111827',
   mutedText: '#6B7280',
   subtleText: '#9CA3AF',
-
-  primary: '#2563EB',
-  accent: '#2563EB',
-  accentSoft: 'rgba(37,99,235,0.08)',
-
-  danger: '#DC2626',
-  dangerSoft: 'rgba(220,38,38,0.08)',
-
-  success: '#16A34A',
-  successSoft: 'rgba(22,163,74,0.08)',
-
-  chipBg: '#F3F4F6',
-  chipBorder: '#E5E7EB',
-  chipText: '#4B5563',
-
-  bannerBg: '#FEE2E2',
-  bannerText: '#B91C1C',
-
   divider: '#E5E7EB',
 
-  tabBarBg: '#FFFFFF',
-  tabBarActive: '#111827',
-  tabBarInactive: '#9CA3AF',
+  accent: '#2563EB',
+  accentSoft: 'rgba(37, 99, 235, 0.10)',
 
-  headerBg: 'transparent',
-  headerText: '#111827',
+  success: '#16A34A',
+  successSoft: 'rgba(22, 163, 74, 0.12)',
+  danger: '#DC2626',
+  dangerSoft: 'rgba(220, 38, 38, 0.12)',
+  warning: '#F59E0B',
+  warningSoft: 'rgba(245, 158, 11, 0.14)',
+
+  chipBg: '#F1F5F9',
+  chipBorder: '#E2E8F0',
+  chipText: '#334155',
+
+  bannerBg: '#FFEDD5',
+  bannerText: '#9A3412',
+
+  tabBarBg: '#FFFFFF',
+  tabBarBorder: '#E5E7EB',
+  tabBarInactive: '#64748B',
 };
 
 const darkPalette = {
-  background: '#020617',
-  card: '#0F172A',
-  cardBorder: '#1E293B',
+  background: '#0B1220',
+  card: '#111A2E',
+  cardBorder: '#23304A',
   text: '#E5E7EB',
-  mutedText: '#9CA3AF',
-  subtleText: '#6B7280',
+  mutedText: '#AAB4C5',
+  subtleText: '#7B879E',
+  divider: '#23304A',
 
-  primary: '#60A5FA',
   accent: '#60A5FA',
-  accentSoft: 'rgba(96,165,250,0.16)',
+  accentSoft: 'rgba(96, 165, 250, 0.20)',
 
-  danger: '#FCA5A5',
-  dangerSoft: 'rgba(248,113,113,0.16)',
+  success: '#34D399',
+  successSoft: 'rgba(52, 211, 153, 0.18)',
+  danger: '#F87171',
+  dangerSoft: 'rgba(248, 113, 113, 0.18)',
+  warning: '#FBBF24',
+  warningSoft: 'rgba(251, 191, 36, 0.18)',
 
-  success: '#4ADE80',
-  successSoft: 'rgba(74,222,128,0.16)',
+  chipBg: 'rgba(148, 163, 184, 0.12)',
+  chipBorder: 'rgba(148, 163, 184, 0.22)',
+  chipText: '#CBD5E1',
 
-  chipBg: '#020617',
-  chipBorder: '#1E293B',
-  chipText: '#E5E7EB',
+  bannerBg: 'rgba(251, 191, 36, 0.20)',
+  bannerText: '#FDE68A',
 
-  bannerBg: 'rgba(248,113,113,0.18)',
-  bannerText: '#FCA5A5',
-
-  divider: '#1E293B',
-
-  tabBarBg: '#020617',
-  tabBarActive: '#E5E7EB',
-  tabBarInactive: '#6B7280',
-
-  headerBg: 'transparent',
-  headerText: '#E5E7EB',
+  tabBarBg: '#0B1220',
+  tabBarBorder: '#23304A',
+  tabBarInactive: '#94A3B8',
 };
 
+function buildNavTheme(isDark, palette) {
+  const base = isDark ? DarkTheme : DefaultTheme;
+
+  return {
+    ...base,
+    dark: isDark,
+    colors: {
+      ...base.colors,
+      primary: palette.accent,
+      background: palette.background,
+      card: palette.tabBarBg,
+      text: palette.text,
+      border: palette.tabBarBorder,
+      notification: palette.danger,
+    },
+    // ✅ 修 BottomTabItem 會讀 fonts.medium 的問題
+    fonts: {
+      regular: { fontFamily: undefined, fontWeight: '400' },
+      medium: { fontFamily: undefined, fontWeight: '500' },
+      bold: { fontFamily: undefined, fontWeight: '700' },
+      heavy: { fontFamily: undefined, fontWeight: '800' },
+    },
+  };
+}
+
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState('light'); // 'light' | 'dark'
-  const [role, setRole] = useState('resident'); // 'resident' | 'admin'
+  const [theme, setTheme] = useState('light');
+  const isDark = theme === 'dark';
 
-  // 啟動時從本機載入 theme / role
-  useEffect(() => {
-    (async () => {
-      try {
-        const [[, storedTheme], [, storedRole]] =
-          await AsyncStorage.multiGet([
-            STORAGE_THEME_KEY,
-            STORAGE_ROLE_KEY,
-          ]);
-
-        if (storedTheme === 'light' || storedTheme === 'dark') {
-          setTheme(storedTheme);
-        }
-        if (storedRole === 'resident' || storedRole === 'admin') {
-          setRole(storedRole);
-        }
-      } catch (e) {
-        console.warn('載入主題 / 角色失敗：', e);
-      }
-    })();
-  }, []);
+  const palette = useMemo(() => (isDark ? darkPalette : lightPalette), [isDark]);
 
   const toggleTheme = useCallback(() => {
-    setTheme((prev) => {
-      const next = prev === 'light' ? 'dark' : 'light';
-      AsyncStorage.setItem(STORAGE_THEME_KEY, next).catch(() => {});
-      return next;
-    });
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   }, []);
 
-  // SettingsScreen 會傳 'admin' / 'resident' 進來
-  const toggleRole = useCallback((nextRole) => {
-    setRole((prev) => {
-      const finalRole =
-        nextRole === 'admin' || nextRole === 'resident'
-          ? nextRole
-          : prev === 'resident'
-          ? 'admin'
-          : 'resident';
-
-      AsyncStorage.setItem(STORAGE_ROLE_KEY, finalRole).catch(
-        () => {},
-      );
-      return finalRole;
-    });
-  }, []);
-
-  const palette = theme === 'dark' ? darkPalette : lightPalette;
+  const navTheme = useMemo(() => buildNavTheme(isDark, palette), [isDark, palette]);
 
   const value = useMemo(
     () => ({
       theme,
-      role,
+      isDark,
       toggleTheme,
-      toggleRole,
+
+      // ✅ 統一：新/舊命名都給
+      navTheme,
+      navigationTheme: navTheme,
+
       palette,
-      // 讓 useThemeColors() 直接拿 palette key
-      ...palette,
+      ...palette, // 讓頁面可直接用 theme.text / theme.card...
+
+      // ✅ 舊版 App.js 可能用到 theme.tabBar
+      tabBar: palette.tabBarBg,
     }),
-    [theme, role, palette],
+    [theme, isDark, toggleTheme, navTheme, palette]
   );
 
-  return (
-    <ThemeContext.Provider value={value}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
 export function useThemeColors() {
   const ctx = useContext(ThemeContext);
-  if (!ctx) {
-    throw new Error('useThemeColors 必須在 ThemeProvider 中使用');
-  }
+  if (!ctx) throw new Error('useThemeColors must be used within ThemeProvider');
   return ctx;
 }
