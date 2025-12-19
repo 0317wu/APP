@@ -101,3 +101,12 @@ src/
 ├─ data/            # 資料狀態管理（DataContext）
 ├─ theme/           # 主題與色彩管理（ThemeContext）
 ├─ styles.js        # 全域樣式
+
+```
+
+## 方案暫存
+感測器(手機A) --MQTT--> Broker --MQTT--> Node.js(訂閱) --寫DB-->
+監控App(手機B) --HTTPS--> Node.js API --讀DB--> 顯示歷史/狀態
+
+
+https://github.com/chingi071/Face_recognition?source=post_page-----75a5e2ef534f---------------------------------------
